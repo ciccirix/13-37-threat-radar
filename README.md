@@ -3,6 +3,9 @@
 **Custom firmware for the LILYGO T-Watch Ultra** — turns the ESP32-S3 smartwatch (AMOLED display, LoRa, GNSS, NFC, full sensor suite) into a smartwatch plus a suite of RF and wireless tools.
 
 ---
+## Purchase
+
+The LilyGo TWatch Ultra can be purchased from LilyGo [here](https://www.lilygo.cc/cpstlm). The US version uses the 915mhz model.
 
 ## Firmware Features
 
