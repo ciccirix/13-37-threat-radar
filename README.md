@@ -7,6 +7,8 @@
 
 **Are you being followed?** Threat Radar correlates the AirTag / Flipper / Skimmer / Flock / Evil-Twin detectors with the GPS fix *over time*. A tracker seen at a single spot is a fixture and is ignored — but a device whose sightings spread across your route is physically **co-moving with you**: a tail. Each contact is scored across distinct waypoints, distance travelled alongside you, and dwell time into **Possible → Likely → Confirmed**. On the first Likely it fires a distinctive triple haptic pulse, surfaces a dedicated **Radar** screen (Tools grid), and logs the tail to `/ThreatRadar/discovered.txt` on the SD card. The "am I even moving?" check is implicit in each contact's own waypoint spread, so a crowd of stationary trackers never raises a false alarm.
 
+**Mesh reputation (group mode):** when a tail is *Confirmed*, the watch broadcasts a hashed flag (`TRFLAG|<hash>|<cat>`) over the active Meshtastic channel — the MAC is shared only as a 32-bit hash, never in the clear. Every peer on the channel stores it, and if their own detectors later see a matching device, Threat Radar escalates it on sight (a bell badge + immediate alert) without waiting to re-derive the tail locally. One rider flags a stalker; the whole pack is warned.
+
 <p align="center">
   <img src="img/threat_radar.png" alt="Threat Radar screen" width="300">
 </p>
