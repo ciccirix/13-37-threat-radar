@@ -1,4 +1,5 @@
 #include "flock.h"
+#include "threat_radar.h"
 #include "wifi_beacon_manager.h"
 
 void clock_screen_get_local_time(struct tm *out);
@@ -183,6 +184,7 @@ bool flock_check(const uint8_t *mac6, int8_t rssi, const char *name, char source
              t.tm_hour, t.tm_min, t.tm_sec);
 
     xQueueSend(s_queue, &hit, 0);
+    threatradar_observe(mac6, rssi, TR_CAT_FLOCK);
     return true;
 }
 
