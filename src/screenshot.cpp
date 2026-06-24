@@ -1,5 +1,6 @@
 #include "screenshot.h"
 #include "settings_screen.h"
+#include "stealth.h"
 #include "usb_sd.h"
 #include <LilyGoLib.h>
 #include <SD.h>
@@ -169,6 +170,10 @@ static bool     s_already_fired    = false;
 
 void screenshot_poll()
 {
+    // In duress disguise we take no screenshots — and it stops the 4 s exit
+    // hold from also tripping this 3 s capture.
+    if (stealth_active()) { s_pressing = false; s_already_fired = false; return; }
+
     // Cheap early-out — the setting is the gating intent, so don't even
     // walk the indev list when the user has it off.
     if (!settings_get_screenshot_long_press()) {
