@@ -1,0 +1,98 @@
+name: build
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+    paths-ignore:
+      - '**.md'
+      - 'img/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  firmware:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Cache PlatformIO
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.platformio
+            ~/.cache/pip
+          key: pio-${{ runner.os }}-${{ hashFiles('platformio.ini') }}
+          restore-keys: pio-${{ runner.os }}-
+
+      - name: Install PlatformIO + esptool
+        run: |
+          python -m pip install --upgrade pip
+          pip install platformio "esptool==4.8.1"
+
+      - name: Build firmware (twatch_ultra)
+        run: pio run -e twatch_ultra
+
+      - name: Create merged binary
+        run: |
+          BUILD=.pio/build/twatch_ultra
+          BOOT_APP0=$(find ~/.platformio/packages -name boot_app0.bin | head -1)
+          echo "boot_app0 = $BOOT_APP0"
+          python -m esptool --chip esp32s3 merge_bin \
+            -o 1337-threat-radar-merged.bin \
+            --flash_mode qio --flash_freq 80m --flash_size 16MB \
+            0x0 "$BUILD/bootloader.bin" \
+            0x8000 "$BUILD/partitions.bin" \
+            0xe000 "$BOOT_APP0" \
+            0x10000 "$BUILD/firmware.bin"
+          cp "$BUILD/firmware.bin" "$BUILD/bootloader.bin" "$BUILD/partitions.bin" .
+          ls -la 1337-threat-radar-merged.bin firmware.bin
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-twatch_ultra
+          path: |
+            1337-threat-radar-merged.bin
+            firmware.bin
+            bootloader.bin
+            partitions.bin
+
+      - name: Publish rolling "latest" release (main)
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: Latest build (main)
+          prerelease: true
+          body: |
+            Auto-built by CI from the latest commit on `main`.
+
+            Flash `1337-threat-radar-merged.bin` at offset `0x0` with esptool or any
+            ESP Web Tools / esptool-js web flasher:
+
+            ```
+            python -m esptool --chip esp32s3 --port COMx --baud 921600 \
+              write_flash 0x0 1337-threat-radar-merged.bin
+            ```
+          files: |
+            1337-threat-radar-merged.bin
+            firmware.bin
+            bootloader.bin
+            partitions.bin
+
+      - name: Publish tagged release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            1337-threat-radar-merged.bin
+            firmware.bin
+            bootloader.bin
+            partitions.bin
