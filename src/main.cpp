@@ -51,6 +51,8 @@
 #include "skimmer.h"
 #include "evil_twin.h"
 #include "flock.h"
+#include "threat_radar.h"
+#include "threat_radar_screen.h"
 #include "matrix_bg.h"
 #include "nfc_icon.h"
 
@@ -1538,6 +1540,7 @@ void setup()
     channels_screen_create();
     settings_screen_create();
     tools_screen_create();
+    threat_radar_screen_create();
     tpms_screen_create();
     pager_screen_create();
     mouse_screen_create();
@@ -1754,6 +1757,7 @@ void loop()
             skimmer_bg_tick();
             evil_twin_bg_tick();
             flock_bg_tick();
+            threatradar_bg_tick();  // correlate detector hits into follow-scores
         }
     }
     // Yield to LVGL between SD-heavy batches. The display uses partial

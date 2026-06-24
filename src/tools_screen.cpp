@@ -12,6 +12,7 @@
 #include "aprs_screen.h"
 #include "wifi_screen.h"
 #include "analyze_screen.h"
+#include "threat_radar_screen.h"
 #include <LilyGoLib.h>
 
 // Defined in main.cpp
@@ -872,6 +873,45 @@ static void draw_tesla_cp_icon(lv_obj_t *tile)
     lv_obj_align(led, LV_ALIGN_BOTTOM_RIGHT, -10, -6);
 }
 
+// Threat Radar — concentric sweep rings with a single red blip, evoking a
+// radar scope. Rings are transparent circles with a green border; the blip is
+// a contact riding a ring, the spoke a faint sweep line.
+static void draw_radar_icon(lv_obj_t *tile)
+{
+    lv_color_t green = lv_color_make(0x22, 0xDD, 0x66);
+    const int rings[3] = { 96, 64, 32 };
+    for (int i = 0; i < 3; i++) {
+        lv_obj_t *r = lv_obj_create(tile);
+        lv_obj_set_size(r, rings[i], rings[i]);
+        lv_obj_set_style_radius(r, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(r, LV_OPA_TRANSP, LV_PART_MAIN);
+        lv_obj_set_style_border_color(r, green, LV_PART_MAIN);
+        lv_obj_set_style_border_width(r, 2, LV_PART_MAIN);
+        lv_obj_set_style_pad_all(r, 0, LV_PART_MAIN);
+        lv_obj_clear_flag(r, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_align(r, LV_ALIGN_TOP_MID, 0, 30 + (96 - rings[i]) / 2);
+    }
+    lv_obj_t *spoke = lv_obj_create(tile);
+    lv_obj_set_size(spoke, 3, 48);
+    lv_obj_set_style_radius(spoke, 2, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(spoke, green, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(spoke, LV_OPA_70, LV_PART_MAIN);
+    lv_obj_set_style_border_width(spoke, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(spoke, 0, LV_PART_MAIN);
+    lv_obj_clear_flag(spoke, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_align(spoke, LV_ALIGN_TOP_MID, 18, 34);
+
+    lv_obj_t *blip = lv_obj_create(tile);
+    lv_obj_set_size(blip, 14, 14);
+    lv_obj_set_style_radius(blip, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(blip, lv_color_make(0xFF, 0x33, 0x33), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(blip, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_border_width(blip, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(blip, 0, LV_PART_MAIN);
+    lv_obj_clear_flag(blip, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_align(blip, LV_ALIGN_TOP_MID, 28, 44);
+}
+
 void tools_screen_create()
 {
     tools_screen = lv_obj_create(NULL);
@@ -929,6 +969,7 @@ void tools_screen_create()
     t_skimmer           = make_tile(grid, "Skimmers");
     t_eviltwin          = make_tile(grid, "Evil Twin");
     t_flock             = make_tile(grid, "Flock");
+    lv_obj_t *t_radar   = make_tile(grid, "Radar");
 
     draw_wifi_icon(t_wifi);
     draw_analyzer_icon(t_analyze);
@@ -943,6 +984,7 @@ void tools_screen_create()
     draw_skimmer_icon(t_skimmer);
     draw_eviltwin_icon(t_eviltwin);
     draw_flock_icon(t_flock);
+    draw_radar_icon(t_radar);
 
     // Tesla CP tile opens the 315 MHz charge-port-open transmit screen.
     lv_obj_add_event_cb(t_tesla, [](lv_event_t *) { tesla_cp_screen_show(); }, LV_EVENT_CLICKED, NULL);
@@ -969,6 +1011,9 @@ void tools_screen_create()
     // Flock tile toggles the surveillance-vendor detector (WiFi + BLE scan).
     lv_obj_add_event_cb(t_flock, on_flock_clicked, LV_EVENT_CLICKED, NULL);
     set_flock_tile_running(flock_is_running());
+
+    // Radar tile opens the Threat Radar spatio-temporal correlation screen.
+    lv_obj_add_event_cb(t_radar, [](lv_event_t *) { threat_radar_screen_show(); }, LV_EVENT_CLICKED, NULL);
 
     // TPMS tile opens the TPMS monitor screen.
     lv_obj_add_event_cb(t_tpms, [](lv_event_t *) { tpms_screen_show(); }, LV_EVENT_CLICKED, NULL);
