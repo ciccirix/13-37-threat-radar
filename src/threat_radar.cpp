@@ -3,6 +3,7 @@
 void clock_screen_get_local_time(struct tm *out);   // defined in main.cpp
 #include "gps_screen.h"
 #include "tracker_rep.h"
+#include "counter_tail.h"
 #include <LilyGoLib.h>   // provides `instance`, whose .gps is a TinyGPSPlus
 #include <SD.h>
 #include <string.h>
@@ -45,6 +46,7 @@ struct TrContact {
     bool     alerted;          // already buzzed for LIKELY+ (edge latch)
     bool     community;        // flagged as a stalker over the mesh (peer or us)
     bool     broadcast;        // we've already announced this tail to the mesh
+    bool     familiar;         // a vehicle you co-move with daily (your own car)
     uint32_t flagged_by;       // peer node id that flagged it (0 = us / local)
 
     uint16_t nwp;              // distinct waypoints stepped through
@@ -73,7 +75,7 @@ static uint32_t  s_buzz_last_ms = 0;
 // ---------------------------------------------------------------------------
 
 static const char *kCatNames[TR_CAT_COUNT] = {
-    "AirTag", "Flipper", "Skimmer", "Flock", "Evil-Twin"
+    "AirTag", "Flipper", "Skimmer", "Flock", "Evil-Twin", "Vehicle"
 };
 static const char *kLvlNames[4] = { "—", "POSSIBLE", "LIKELY", "CONFIRMED" };
 
@@ -191,6 +193,7 @@ static void fill_threat(const TrContact *c, TrThreat *t, uint32_t now)
     t->best_rssi = c->best_rssi;
     t->active    = (now - c->last_ms) < TR_STALE_MS;
     t->community = c->community;
+    t->familiar  = c->familiar;
     t->first_lat = (float)c->first_lat;
     t->first_lon = (float)c->first_lon;
     memcpy(t->first_time, c->first_time, sizeof(t->first_time));
@@ -250,19 +253,30 @@ static void fold_sighting(const TrSighting *s, bool has_fix,
     // Edge: first time this contact reaches LIKELY, raise the alert + buzz.
     if (c->level >= TR_LVL_LIKELY && !c->alerted) {
         c->alerted = true;
-        log_tail_to_sd(c);          // evidence trail on the first alert
-        if (!s_alert_pending) {
-            fill_threat(c, &s_alert_snap, now);
-            s_alert_pending = true;
+        // A vehicle that co-moves with you on most days is your own — learn it
+        // and stay silent. Only an UNFAMILIAR co-moving vehicle is a tail.
+        bool suppress = false;
+        if (c->category == TR_CAT_VEHICLE) {
+            counter_tail_mark_comover(c->mac);
+            suppress = c->familiar = counter_tail_is_familiar(c->mac);
         }
-        s_buzz_left = 3;            // distinctive triple-pulse
+        if (!suppress) {
+            log_tail_to_sd(c);      // evidence trail on the first alert
+            if (!s_alert_pending) {
+                fill_threat(c, &s_alert_snap, now);
+                s_alert_pending = true;
+            }
+            s_buzz_left = 3;        // distinctive triple-pulse
+        }
     }
 
     // Confirmed locally → announce this tail to the mesh so the whole group is
-    // warned. tracker_rep dedups + gates on the LoRa radio being active.
+    // warned. tracker_rep dedups + gates on the LoRa radio being active. Never
+    // broadcast one of your own familiar vehicles.
     if (c->level >= TR_LVL_CONFIRMED && !c->broadcast) {
         c->broadcast = true;
-        tracker_rep_flag_local(c->mac, c->category);
+        if (!(c->category == TR_CAT_VEHICLE && counter_tail_is_familiar(c->mac)))
+            tracker_rep_flag_local(c->mac, c->category);
     }
 }
 
