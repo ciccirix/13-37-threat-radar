@@ -2,6 +2,7 @@
 
 void clock_screen_get_local_time(struct tm *out);   // defined in main.cpp
 #include "gps_screen.h"
+#include "tracker_rep.h"
 #include <LilyGoLib.h>   // provides `instance`, whose .gps is a TinyGPSPlus
 #include <SD.h>
 #include <string.h>
@@ -42,6 +43,9 @@ struct TrContact {
     uint8_t  category;
     uint8_t  level;
     bool     alerted;          // already buzzed for LIKELY+ (edge latch)
+    bool     community;        // flagged as a stalker over the mesh (peer or us)
+    bool     broadcast;        // we've already announced this tail to the mesh
+    uint32_t flagged_by;       // peer node id that flagged it (0 = us / local)
 
     uint16_t nwp;              // distinct waypoints stepped through
     double   first_lat, first_lon;
@@ -186,6 +190,7 @@ static void fill_threat(const TrContact *c, TrThreat *t, uint32_t now)
     t->span_min  = (uint16_t)((c->last_ms - c->first_ms) / 60000UL);
     t->best_rssi = c->best_rssi;
     t->active    = (now - c->last_ms) < TR_STALE_MS;
+    t->community = c->community;
     t->first_lat = (float)c->first_lat;
     t->first_lon = (float)c->first_lon;
     memcpy(t->first_time, c->first_time, sizeof(t->first_time));
@@ -228,6 +233,17 @@ static void fold_sighting(const TrSighting *s, bool has_fix,
         }
     }
 
+    // Distributed early warning: if a peer (or we) flagged this MAC over the
+    // mesh, escalate it on sight — don't wait for local co-movement to prove it.
+    if (!c->community) {
+        uint8_t rcat; uint32_t rfrom;
+        if (tracker_rep_is_flagged(c->mac, &rcat, &rfrom)) {
+            c->community  = true;
+            c->flagged_by = rfrom;
+            if (c->level < TR_LVL_LIKELY) c->level = TR_LVL_LIKELY;
+        }
+    }
+
     uint8_t lvl = score_level(c);
     if (lvl > c->level) c->level = lvl;   // latch upward; recency handled at read
 
@@ -240,6 +256,13 @@ static void fold_sighting(const TrSighting *s, bool has_fix,
             s_alert_pending = true;
         }
         s_buzz_left = 3;            // distinctive triple-pulse
+    }
+
+    // Confirmed locally → announce this tail to the mesh so the whole group is
+    // warned. tracker_rep dedups + gates on the LoRa radio being active.
+    if (c->level >= TR_LVL_CONFIRMED && !c->broadcast) {
+        c->broadcast = true;
+        tracker_rep_flag_local(c->mac, c->category);
     }
 }
 

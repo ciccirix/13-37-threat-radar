@@ -55,7 +55,8 @@ static void add_row(const TrThreat *t)
     lv_obj_set_style_text_color(head,
         t->active ? lvl_color(t->level) : lv_color_make(0x77, 0x77, 0x77),
         LV_PART_MAIN);
-    lv_label_set_text_fmt(head, "%s  ·  %s%s",
+    lv_label_set_text_fmt(head, "%s%s  ·  %s%s",
+        t->community ? LV_SYMBOL_BELL " " : "",   // flagged over the mesh
         threatradar_category_name(t->category),
         threatradar_level_name(t->level),
         t->active ? "" : "  (lost)");
