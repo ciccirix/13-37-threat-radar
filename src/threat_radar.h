@@ -27,6 +27,7 @@ enum TrCategory {
     TR_CAT_SKIMMER,
     TR_CAT_FLOCK,
     TR_CAT_EVILTWIN,
+    TR_CAT_VEHICLE,        // ambient BLE/WiFi promoted by counter-tail (a car)
     TR_CAT_COUNT
 };
 
@@ -62,6 +63,7 @@ struct TrThreat {
     int8_t   best_rssi;    // strongest (closest) RSSI seen — proximity hint
     bool     active;       // seen within the staleness window
     bool     community;    // flagged as a stalker over the mesh (peer or us)
+    bool     familiar;     // a vehicle/device you co-move with daily (your own)
     float    first_lat;    // where it was first picked up — the map pin
     float    first_lon;
     char     first_time[6];// "HH:MM" first seen

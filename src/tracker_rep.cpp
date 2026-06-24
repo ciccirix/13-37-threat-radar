@@ -7,10 +7,10 @@
 
 // One-character category code carried on the wire, indexed by the Threat Radar
 // TrCategory enum (AirTag=0, Flipper=1, Skimmer=2, Flock=3, Evil-Twin=4).
-static const char kCatChar[5] = { 'A', 'F', 'S', 'K', 'E' };
-static char cat_to_char(uint8_t c) { return c < 5 ? kCatChar[c] : 'A'; }
+static const char kCatChar[6] = { 'A', 'F', 'S', 'K', 'E', 'V' };
+static char cat_to_char(uint8_t c) { return c < 6 ? kCatChar[c] : 'A'; }
 static uint8_t char_to_cat(char ch) {
-    for (uint8_t i = 0; i < 5; i++) if (kCatChar[i] == ch) return i;
+    for (uint8_t i = 0; i < 6; i++) if (kCatChar[i] == ch) return i;
     return 0;
 }
 

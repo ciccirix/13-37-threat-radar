@@ -2,6 +2,10 @@
 
 **Custom firmware for the LILYGO T-Watch Ultra** — turns the ESP32-S3 smartwatch (AMOLED display, LoRa, GNSS, NFC, full sensor suite) into a smartwatch plus a suite of RF and wireless tools.
 
+[![build](https://github.com/ciccirix/13-37-threat-radar/actions/workflows/build.yml/badge.svg)](https://github.com/ciccirix/13-37-threat-radar/actions/workflows/build.yml)
+
+⬇️ **[Download the latest flashable build](https://github.com/ciccirix/13-37-threat-radar/releases/latest)** — grab `1337-threat-radar-merged.bin` and flash it at offset `0x0` (esptool or an ESP Web Tools / esptool-js web flasher). Rebuilt automatically on every push.
+
 ---
 ## 🛰️ Threat Radar — *this fork's addition*
 
@@ -9,11 +13,13 @@
 
 **Mesh reputation (group mode):** when a tail is *Confirmed*, the watch broadcasts a hashed flag (`TRFLAG|<hash>|<cat>`) over the active Meshtastic channel — the MAC is shared only as a 32-bit hash, never in the clear. Every peer on the channel stores it, and if their own detectors later see a matching device, Threat Radar escalates it on sight (a bell badge + immediate alert) without waiting to re-derive the tail locally. One rider flags a stalker; the whole pack is warned.
 
-<p align="center">
-  <img src="img/threat_radar.png" alt="Threat Radar screen" width="300">
-</p>
+**Counter-tail (vehicles):** the same co-movement test is extended to ambient BLE/WiFi, so a *car* shadowing you across a drive — its infotainment, hotspot or TPMS riding along — surfaces as a `Vehicle` contact. Devices that travel with you on two or more separate days (your own car, phone, earbuds) are learned and muted as *familiar*, so only an unknown vehicle that is actually following raises the alarm.
 
-> *Concept mockup of the Radar screen — on-device screenshots to follow.*
+| Threat Radar |
+| :---: |
+| <img src="img/threat_radar.png" width="300" alt="Threat Radar screen"> |
+
+> Rendered at the watch's native 410×502 resolution — showing a tailing vehicle, a peer-flagged AirTag, and your own car muted as *familiar*. On-device screenshots to follow once flashed.
 
 ---
 ## Purchase
