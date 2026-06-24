@@ -3,6 +3,17 @@
 **Custom firmware for the LILYGO T-Watch Ultra** — turns the ESP32-S3 smartwatch (AMOLED display, LoRa, GNSS, NFC, full sensor suite) into a smartwatch plus a suite of RF and wireless tools.
 
 ---
+## 🛰️ Threat Radar — *this fork's addition*
+
+**Are you being followed?** Threat Radar correlates the AirTag / Flipper / Skimmer / Flock / Evil-Twin detectors with the GPS fix *over time*. A tracker seen at a single spot is a fixture and is ignored — but a device whose sightings spread across your route is physically **co-moving with you**: a tail. Each contact is scored across distinct waypoints, distance travelled alongside you, and dwell time into **Possible → Likely → Confirmed**. On the first Likely it fires a distinctive triple haptic pulse, surfaces a dedicated **Radar** screen (Tools grid), and logs the tail to `/ThreatRadar/discovered.txt` on the SD card. The "am I even moving?" check is implicit in each contact's own waypoint spread, so a crowd of stationary trackers never raises a false alarm.
+
+<p align="center">
+  <img src="img/threat_radar.png" alt="Threat Radar screen" width="300">
+</p>
+
+> *Concept mockup of the Radar screen — on-device screenshots to follow.*
+
+---
 ## Purchase
 
 The LilyGo TWatch Ultra can be purchased from LilyGo [here](https://www.lilygo.cc/cpstlm). The US version uses the 915mhz model.
