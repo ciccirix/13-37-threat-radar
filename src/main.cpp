@@ -53,6 +53,7 @@
 #include "flock.h"
 #include "threat_radar.h"
 #include "threat_radar_screen.h"
+#include "stealth.h"
 #include "matrix_bg.h"
 #include "nfc_icon.h"
 
@@ -668,6 +669,16 @@ static void update_scan_indicators()
         !flipper_indicator || !skimmer_indicator ||
         !evil_twin_indicator) return;
 
+    // Duress disguise: hide every scan-count badge so the clock looks innocent.
+    if (stealth_active()) {
+        lv_obj_add_flag(airtag_indicator,    LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(flipper_indicator,   LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(skimmer_indicator,   LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(evil_twin_indicator, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(flock_indicator,     LV_OBJ_FLAG_HIDDEN);
+        return;
+    }
+
     bool airtag_vis   = airtag_is_running()    || airtag_get_count()    > 0;
     // Flipper / Skimmer / EvilTwin indicators show only when at least one
     // detection has happened — they stay hidden while the wardriver /
@@ -913,6 +924,7 @@ static void motion_wake_poll()
 
     float delta = fabsf(mag - s_motion_last_mag);
     s_motion_last_mag = mag;
+    stealth_feed_accel_delta(delta);   // vigorous shake → duress disguise
     if (delta >= MOTION_DELTA_G) {
         dim_reset_activity();
     }
@@ -1653,6 +1665,10 @@ void loop()
     // Cheap on every iteration (an indev_state read + a millis() compare);
     // only crosses into the heavy capture+SD-write path on the 3 s edge.
     screenshot_poll();
+    stealth_poll();   // 4 s long-press disarms the duress disguise
+    // While the disguise is armed, pin the UI to the bare clock no matter what
+    // navigation tried to fire — the tooling stays out of sight.
+    if (stealth_active() && lv_screen_active() != clock_screen) clock_screen_show();
 
     // Back button (GPIO0) — consumed here, outside ISR context.
     // 250 ms debounce: mechanical bounce on GPIO0 can fire several FALLING
