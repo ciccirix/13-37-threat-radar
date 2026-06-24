@@ -1,4 +1,5 @@
 #include "wifi_beacon_manager.h"
+#include "pwnagotchi_peer.h"
 #include <WiFi.h>
 #include "esp_wifi.h"
 #include <lvgl.h>
@@ -16,6 +17,32 @@ static void parse_and_dispatch(const uint8_t *frame, int len,
 {
     if (len < 38) return;
     if ((frame[0] & 0xFC) != 0x80) return;   // not a beacon
+
+    // Pwnagotchi advertisement — a beacon from DE:AD:BE:EF:DE:AD carrying a JSON
+    // blob in an oversized SSID. Non-standard (capability bits may be unset, the
+    // SSID exceeds 32 bytes), so catch it here, ahead of the infrastructure-AP
+    // gate and 32-byte SSID cap below that would otherwise drop or truncate it.
+    {
+        static const uint8_t PWN_MAC[6] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xDE, 0xAD };
+        if (memcmp(frame + 16, PWN_MAC, 6) == 0) {
+            char js[120] = {0};
+            const uint8_t *tg = frame + 36;
+            int tgl = len - 36;
+            for (int pos = 0; pos + 2 <= tgl; ) {
+                uint8_t id = tg[pos], tl = tg[pos + 1];
+                if (pos + 2 + tl > tgl) break;
+                if (id == 0) {                       // SSID element holds the JSON
+                    int n = tl < (int)sizeof(js) - 1 ? tl : (int)sizeof(js) - 1;
+                    memcpy(js, tg + pos + 2, n);
+                    js[n] = '\0';
+                    break;
+                }
+                pos += 2 + tl;
+            }
+            pwnagotchi_check(frame + 16, rssi, js);
+            return;   // not a real AP — keep it out of the survey consumers
+        }
+    }
 
     uint16_t cap = frame[34] | ((uint16_t)frame[35] << 8);
     if (!(cap & 0x0001)) return;              // not an infrastructure AP
