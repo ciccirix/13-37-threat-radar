@@ -28,11 +28,14 @@ static bool s_active = false;
 static void add_row(const TrThreat *t)
 {
     lv_obj_t *row = lv_obj_create(s_list);
+    // A familiar vehicle (your own car/phone) is shown muted, never as a threat.
+    lv_color_t accent = t->familiar ? lv_color_make(0x55, 0x66, 0x55)
+                                     : lvl_color(t->level);
     lv_obj_set_size(row, 380, 84);
     lv_obj_set_style_bg_color(row, lv_color_make(0x14, 0x14, 0x14), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(row, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_radius(row, 10, LV_PART_MAIN);
-    lv_obj_set_style_border_color(row, lvl_color(t->level), LV_PART_MAIN);
+    lv_obj_set_style_border_color(row, accent, LV_PART_MAIN);
     lv_obj_set_style_border_width(row, 2, LV_PART_MAIN);
     lv_obj_set_style_pad_all(row, 8, LV_PART_MAIN);
     lv_obj_set_style_pad_left(row, 14, LV_PART_MAIN);
@@ -42,7 +45,7 @@ static void add_row(const TrThreat *t)
     lv_obj_t *bar = lv_obj_create(row);
     lv_obj_set_size(bar, 6, 52);
     lv_obj_set_style_radius(bar, 3, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(bar, lvl_color(t->level), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(bar, accent, LV_PART_MAIN);
     lv_obj_set_style_bg_opa(bar, t->active ? LV_OPA_COVER : LV_OPA_40, LV_PART_MAIN);
     lv_obj_set_style_border_width(bar, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(bar, 0, LV_PART_MAIN);
@@ -53,13 +56,13 @@ static void add_row(const TrThreat *t)
     lv_obj_t *head = lv_label_create(row);
     lv_obj_set_style_text_font(head, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_obj_set_style_text_color(head,
-        t->active ? lvl_color(t->level) : lv_color_make(0x77, 0x77, 0x77),
+        t->active ? accent : lv_color_make(0x77, 0x77, 0x77),
         LV_PART_MAIN);
     lv_label_set_text_fmt(head, "%s%s  ·  %s%s",
         t->community ? LV_SYMBOL_BELL " " : "",   // flagged over the mesh
         threatradar_category_name(t->category),
         threatradar_level_name(t->level),
-        t->active ? "" : "  (lost)");
+        t->familiar ? "  (yours)" : (t->active ? "" : "  (lost)"));
     lv_obj_align(head, LV_ALIGN_TOP_LEFT, 8, 2);
 
     // Metrics: distance travelled alongside, dwell minutes, waypoint count.
