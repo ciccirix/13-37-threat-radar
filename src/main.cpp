@@ -54,6 +54,7 @@
 #include "threat_radar.h"
 #include "threat_radar_screen.h"
 #include "pet_screen.h"
+#include "handshake.h"
 #include "stealth.h"
 #include "matrix_bg.h"
 #include "nfc_icon.h"
@@ -1777,6 +1778,7 @@ void loop()
             evil_twin_bg_tick();
             flock_bg_tick();
             threatradar_bg_tick();  // correlate detector hits into follow-scores
+            handshake_bg_tick();    // drain captured EAPOL frames to /pwn/*.pcap
         }
     }
     // Yield to LVGL between SD-heavy batches. The display uses partial

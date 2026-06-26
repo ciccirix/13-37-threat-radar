@@ -3,6 +3,7 @@
 #include "threat_radar.h"
 #include "tools_screen.h"
 #include "wifi_beacon_manager.h"
+#include "handshake.h"
 #include <lvgl.h>
 #include <LilyGoLib.h>
 #include <SD.h>
@@ -42,6 +43,8 @@ static bool     s_xp_loaded   = false;
 static uint8_t  s_mood        = PET_BORED;
 static uint32_t s_mood_until  = 0;
 static int      s_last_peers  = 0;
+static int      s_last_pwnd   = 0;
+static bool     s_eat         = false;   // EXCITED is an "ate a handshake" moment
 static bool     s_dirty       = false;
 static uint32_t s_last_save   = 0;
 
@@ -76,8 +79,12 @@ static void save_xp()
 
 static void refresh()
 {
-    if (s_mood == PET_EXCITED) lv_label_set_text_fmt(s_speech, "hi %s! blub!", pwnagotchi_last_name());
-    else                       lv_label_set_text(s_speech, kSpeech[s_mood]);
+    if (s_mood == PET_EXCITED) {
+        if (s_eat) lv_label_set_text(s_speech, "nom! caught a handshake!");
+        else       lv_label_set_text_fmt(s_speech, "hi %s! blub!", pwnagotchi_last_name());
+    } else {
+        lv_label_set_text(s_speech, kSpeech[s_mood]);
+    }
 
     lv_color_t body =
         (s_mood == PET_WARY)    ? lv_color_make(0xFF, 0x4A, 0x2A) :   // alarmed red
@@ -89,8 +96,8 @@ static void refresh()
     lv_obj_set_width(s_bar_fill, 2 + (xp_into(s_xp) * 296) / 100);
 
     int peers = pwnagotchi_peer_count();
-    lv_label_set_text_fmt(s_stats, "friends %d   xp %ld   up %lum",
-        peers, s_xp, (unsigned long)(millis() / 60000));
+    lv_label_set_text_fmt(s_stats, "PWND %d   friends %d   xp %ld",
+        handshake_pwnd_count(), peers, s_xp);
 }
 
 static void on_tick(lv_timer_t *)
@@ -100,12 +107,17 @@ static void on_tick(lv_timer_t *)
 
     int peers  = pwnagotchi_peer_count();
     int threat = threatradar_top_level();
+    int pwnd   = handshake_pwnd_count();
 
     uint8_t newmood;
-    if (peers > s_last_peers) {
+    if (pwnd > s_last_pwnd) {                          // ate a handshake
+        s_xp += 30L * (pwnd - s_last_pwnd);
+        s_last_pwnd = pwnd;
+        newmood = PET_EXCITED; s_eat = true;  s_mood_until = now + 5000; s_dirty = true;
+    } else if (peers > s_last_peers) {                 // met a Pwnagotchi
         s_xp += 50L * (peers - s_last_peers);
         s_last_peers = peers;
-        newmood = PET_EXCITED; s_mood_until = now + 6000; s_dirty = true;
+        newmood = PET_EXCITED; s_eat = false; s_mood_until = now + 6000; s_dirty = true;
     } else if (threat >= TR_LVL_LIKELY) {
         newmood = PET_WARY;    s_mood_until = now + 4000;
     } else if (now < s_mood_until) {
@@ -310,6 +322,7 @@ void pet_screen_show()
     if (!s_screen) pet_screen_create();
     if (!s_xp_loaded) load_xp();
     s_last_peers = pwnagotchi_peer_count();
+    s_last_pwnd  = handshake_pwnd_count();
     s_active = true;
     wifi_beacon_add(pet_wifi_noop);   // power the scanner so we meet peers live
     refresh();

@@ -15,6 +15,7 @@
 #include "threat_radar_screen.h"
 #include "pet_screen.h"
 #include "stealth.h"
+#include "handshake.h"
 #include <LilyGoLib.h>
 
 // Defined in main.cpp
@@ -28,6 +29,7 @@ static lv_obj_t *t_skimmer;   // referenced by on_skimmer_clicked for colour swa
 static lv_obj_t *t_eviltwin;  // referenced by on_eviltwin_clicked for colour swap
 static lv_obj_t *t_flock;     // referenced by on_flock_clicked for colour swap
 static lv_obj_t *t_duress;    // referenced by on_duress_clicked for colour swap
+static lv_obj_t *t_handshake; // referenced by on_handshake_clicked for colour swap
 
 static void on_gesture(lv_event_t *e)
 {
@@ -147,6 +149,25 @@ static void on_duress_clicked(lv_event_t *)
     bool now = !stealth_armed();
     stealth_set_armed(now);
     set_duress_tile_armed(now);
+}
+
+// Passive WPA handshake / PMKID capture toggle. Green while capturing.
+static void set_handshake_tile_running(bool on)
+{
+    lv_obj_set_style_bg_color(t_handshake,
+        on ? lv_color_make(0x00, 0x55, 0x22) : lv_color_make(0x11, 0x11, 0x11),
+        LV_PART_MAIN);
+}
+
+static void on_handshake_clicked(lv_event_t *)
+{
+    if (handshake_is_running()) {
+        handshake_stop();
+        set_handshake_tile_running(false);
+    } else {
+        bool ok = handshake_start();
+        set_handshake_tile_running(ok);
+    }
 }
 
 // Tile container — 180x180 button-like card with a label at the bottom.
@@ -1020,6 +1041,33 @@ static void draw_duress_icon(lv_obj_t *tile)
     lv_obj_align(clk, LV_ALIGN_TOP_MID, 0, 122);
 }
 
+// Handshake capture — signal rings with a captured packet dropping out (orange).
+static void draw_handshake_icon(lv_obj_t *tile)
+{
+    lv_color_t o = lv_color_make(0xff, 0x8c, 0x1a);
+    const int d[3] = { 96, 66, 36 };
+    for (int i = 0; i < 3; i++) {
+        lv_obj_t *a = lv_obj_create(tile);
+        lv_obj_set_size(a, d[i], d[i]);
+        lv_obj_set_style_radius(a, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(a, LV_OPA_TRANSP, LV_PART_MAIN);
+        lv_obj_set_style_border_color(a, o, LV_PART_MAIN);
+        lv_obj_set_style_border_width(a, 3, LV_PART_MAIN);
+        lv_obj_set_style_pad_all(a, 0, LV_PART_MAIN);
+        lv_obj_clear_flag(a, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_align(a, LV_ALIGN_TOP_MID, 0, 30 + (96 - d[i]) / 2);
+    }
+    lv_obj_t *pkt = lv_obj_create(tile);
+    lv_obj_set_size(pkt, 22, 16);
+    lv_obj_set_style_radius(pkt, 3, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(pkt, o, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(pkt, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_border_width(pkt, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(pkt, 0, LV_PART_MAIN);
+    lv_obj_clear_flag(pkt, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_align(pkt, LV_ALIGN_TOP_MID, 0, 124);
+}
+
 void tools_screen_create()
 {
     tools_screen = lv_obj_create(NULL);
@@ -1080,6 +1128,7 @@ void tools_screen_create()
     lv_obj_t *t_radar   = make_tile(grid, "Radar");
     lv_obj_t *t_pet     = make_tile(grid, "Pet");
     t_duress            = make_tile(grid, "Duress");
+    t_handshake         = make_tile(grid, "Pwn");
 
     draw_wifi_icon(t_wifi);
     draw_analyzer_icon(t_analyze);
@@ -1097,6 +1146,7 @@ void tools_screen_create()
     draw_radar_icon(t_radar);
     draw_pet_icon(t_pet);
     draw_duress_icon(t_duress);
+    draw_handshake_icon(t_handshake);
 
     // Tesla CP tile opens the 315 MHz charge-port-open transmit screen.
     lv_obj_add_event_cb(t_tesla, [](lv_event_t *) { tesla_cp_screen_show(); }, LV_EVENT_CLICKED, NULL);
@@ -1133,6 +1183,10 @@ void tools_screen_create()
     // Duress tile arms/disarms the shake-to-disguise mode (green when armed).
     lv_obj_add_event_cb(t_duress, on_duress_clicked, LV_EVENT_CLICKED, NULL);
     set_duress_tile_armed(stealth_armed());
+
+    // Pwn tile arms/disarms passive handshake/PMKID capture (green when running).
+    lv_obj_add_event_cb(t_handshake, on_handshake_clicked, LV_EVENT_CLICKED, NULL);
+    set_handshake_tile_running(handshake_is_running());
 
     // TPMS tile opens the TPMS monitor screen.
     lv_obj_add_event_cb(t_tpms, [](lv_event_t *) { tpms_screen_show(); }, LV_EVENT_CLICKED, NULL);
