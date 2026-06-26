@@ -20,6 +20,12 @@ void stealth_enter();
 void stealth_exit();
 bool stealth_active();
 
+// Duress is OPT-IN and OFF by default: a stray shake can never trap the UI
+// unless the user has explicitly armed it. Disarming also drops any active
+// disguise so the watch can't get stuck.
+void stealth_set_armed(bool on);
+bool stealth_armed();
+
 // Fed the per-sample accelerometer magnitude delta (in g) from motion_wake_poll;
 // a burst of large deltas inside a short window trips the disguise.
 void stealth_feed_accel_delta(float delta_g);

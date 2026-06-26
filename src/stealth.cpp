@@ -6,8 +6,16 @@
 void clock_screen_show();   // defined in main.cpp
 
 static bool s_active = false;
+static bool s_armed  = false;   // duress is opt-in; off by default
 
 bool stealth_active() { return s_active; }
+bool stealth_armed()  { return s_armed; }
+
+void stealth_set_armed(bool on)
+{
+    s_armed = on;
+    if (!on && s_active) stealth_exit();   // disarming can't leave us stuck
+}
 
 void stealth_enter()
 {
@@ -28,16 +36,16 @@ void stealth_exit()
 // Count large magnitude deltas inside a sliding window. A deliberate shaker
 // motion produces several >SHAKE_DELTA_G swings per second; gentle wrist tilts
 // and a motorcycle's high-frequency buzz stay well under the bar.
-#define SHAKE_DELTA_G    1.5f
-#define SHAKE_HITS       6
-#define SHAKE_WINDOW_MS  1300
+#define SHAKE_DELTA_G    2.0f
+#define SHAKE_HITS       8
+#define SHAKE_WINDOW_MS  1400
 
 static uint8_t  s_hits         = 0;
 static uint32_t s_window_start = 0;
 
 void stealth_feed_accel_delta(float delta_g)
 {
-    if (s_active) return;                         // already disguised
+    if (!s_armed || s_active) return;             // dormant unless armed
     uint32_t now = millis();
     if (now - s_window_start > SHAKE_WINDOW_MS) { // window expired — restart count
         s_window_start = now;
