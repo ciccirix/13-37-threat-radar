@@ -22,6 +22,17 @@
 > Rendered at the watch's native 410×502 resolution — showing a tailing vehicle, a peer-flagged AirTag, and your own car muted as *familiar*. On-device screenshots to follow once flashed.
 
 ---
+## 🐠 pwnpet — *this fork's addition*
+
+A Tamagotchi-style **goldfish** that swims the airwaves. It meets nearby Pwnagotchi units over their `DE:AD:BE:EF:DE:AD` advertisement beacons (so it greets your real Pi), turns wary when Threat Radar spots a tail, and — with passive capture armed from the **Pwn** tile — *eats* the WPA handshakes / PMKIDs it catches, logging them to `/pwn/<ts>.pcap` for offline cracking (`hashcat -m 22000`). Level, XP and friends-met persist to the SD card. Strictly passive — no deauth — and for authorized testing only.
+
+| pwnpet |
+| :---: |
+| <img src="img/pwnpet.png" width="300" alt="pwnpet goldfish screen"> |
+
+> Rendered at the watch's native 410×502 — the on-device fish is an LVGL approximation drawn from primitives.
+
+---
 ## Purchase
 
 The LilyGo TWatch Ultra can be purchased from LilyGo [here](https://www.lilygo.cc/cpstlm). The US version uses the 915mhz model.
