@@ -2,11 +2,36 @@
 #include <LilyGoLib.h>
 #include <lvgl.h>
 #include <Arduino.h>
+#include <Preferences.h>
 
 void clock_screen_show();   // defined in main.cpp
 
 static bool s_active = false;
 static bool s_armed  = false;   // duress is opt-in; off by default
+
+// State lives in internal NVS (not the SD card) so the disguise can't be
+// bypassed by yanking the microSD, and survives a power cycle.
+static void persist()
+{
+    Preferences p;
+    if (p.begin("duress", false)) {
+        p.putBool("armed",  s_armed);
+        p.putBool("active", s_active);
+        p.end();
+    }
+}
+
+void stealth_load()
+{
+    Preferences p;
+    if (p.begin("duress", true)) {
+        s_armed  = p.getBool("armed",  false);
+        s_active = p.getBool("active", false);
+        p.end();
+    }
+    // If restored disguised, do NOT vibrate or call stealth_enter() — the boot
+    // is silent and the loop guard + hidden badges enforce the disguise.
+}
 
 bool stealth_active() { return s_active; }
 bool stealth_armed()  { return s_armed; }
@@ -14,13 +39,15 @@ bool stealth_armed()  { return s_armed; }
 void stealth_set_armed(bool on)
 {
     s_armed = on;
-    if (!on && s_active) stealth_exit();   // disarming can't leave us stuck
+    if (!on) s_active = false;   // disarming drops any active disguise
+    persist();
 }
 
 void stealth_enter()
 {
     if (s_active) return;
     s_active = true;
+    persist();                  // survive a reboot while disguised
     instance.vibrator();        // one short blip confirms the disguise engaged
     clock_screen_show();        // loop() keeps us pinned to the clock while active
 }
@@ -29,6 +56,7 @@ void stealth_exit()
 {
     if (!s_active) return;
     s_active = false;
+    persist();                  // the secret 4 s hold clears the persisted flag
     instance.vibrator();
 }
 

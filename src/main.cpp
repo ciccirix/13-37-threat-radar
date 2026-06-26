@@ -1552,6 +1552,7 @@ void setup()
     configuration_screen_create();
     channels_screen_create();
     settings_screen_create();
+    stealth_load();   // restore duress state before the Tools tile reads `armed`
     tools_screen_create();
     threat_radar_screen_create();
     pet_screen_create();

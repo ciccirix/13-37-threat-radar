@@ -14,6 +14,7 @@
 #include "analyze_screen.h"
 #include "threat_radar_screen.h"
 #include "pet_screen.h"
+#include "stealth.h"
 #include <LilyGoLib.h>
 
 // Defined in main.cpp
@@ -26,6 +27,7 @@ static lv_obj_t *t_flipper;   // referenced by on_flipper_clicked for colour swa
 static lv_obj_t *t_skimmer;   // referenced by on_skimmer_clicked for colour swap
 static lv_obj_t *t_eviltwin;  // referenced by on_eviltwin_clicked for colour swap
 static lv_obj_t *t_flock;     // referenced by on_flock_clicked for colour swap
+static lv_obj_t *t_duress;    // referenced by on_duress_clicked for colour swap
 
 static void on_gesture(lv_event_t *e)
 {
@@ -128,6 +130,23 @@ static void on_flock_clicked(lv_event_t *e)
         bool ok = flock_start();
         set_flock_tile_running(ok);
     }
+}
+
+// Duress disguise arm/disarm. Green when armed; a shake then drops the watch
+// into the bare-clock disguise (which survives reboot until the 4 s hold).
+static void set_duress_tile_armed(bool armed)
+{
+    lv_obj_set_style_bg_color(t_duress,
+        armed ? lv_color_make(0x00, 0x55, 0x22)
+              : lv_color_make(0x11, 0x11, 0x11),
+        LV_PART_MAIN);
+}
+
+static void on_duress_clicked(lv_event_t *)
+{
+    bool now = !stealth_armed();
+    stealth_set_armed(now);
+    set_duress_tile_armed(now);
 }
 
 // Tile container — 180x180 button-like card with a label at the bottom.
@@ -964,6 +983,43 @@ static void draw_pet_icon(lv_obj_t *tile)
     lv_obj_align(m, LV_ALIGN_TOP_MID, 0, 84);
 }
 
+// Duress — a domino mask (go-dark / disguise) over a faint clock outline.
+static void draw_duress_icon(lv_obj_t *tile)
+{
+    lv_obj_t *mask = lv_obj_create(tile);
+    lv_obj_set_size(mask, 108, 48);
+    lv_obj_set_style_radius(mask, 24, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(mask, lv_color_make(0x20, 0x22, 0x2a), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(mask, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_border_color(mask, lv_color_make(0x55, 0x5a, 0x66), LV_PART_MAIN);
+    lv_obj_set_style_border_width(mask, 2, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(mask, 0, LV_PART_MAIN);
+    lv_obj_clear_flag(mask, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_align(mask, LV_ALIGN_TOP_MID, 0, 58);
+
+    for (int i = 0; i < 2; i++) {
+        lv_obj_t *eye = lv_obj_create(tile);
+        lv_obj_set_size(eye, 22, 22);
+        lv_obj_set_style_radius(eye, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+        lv_obj_set_style_bg_color(eye, lv_color_make(0x11, 0x11, 0x11), LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(eye, LV_OPA_COVER, LV_PART_MAIN);
+        lv_obj_set_style_border_width(eye, 0, LV_PART_MAIN);
+        lv_obj_set_style_pad_all(eye, 0, LV_PART_MAIN);
+        lv_obj_clear_flag(eye, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_align(eye, LV_ALIGN_TOP_MID, i == 0 ? -24 : 24, 71);
+    }
+
+    lv_obj_t *clk = lv_obj_create(tile);
+    lv_obj_set_size(clk, 40, 40);
+    lv_obj_set_style_radius(clk, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(clk, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_set_style_border_color(clk, lv_color_make(0x66, 0x66, 0x66), LV_PART_MAIN);
+    lv_obj_set_style_border_width(clk, 2, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(clk, 0, LV_PART_MAIN);
+    lv_obj_clear_flag(clk, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_align(clk, LV_ALIGN_TOP_MID, 0, 122);
+}
+
 void tools_screen_create()
 {
     tools_screen = lv_obj_create(NULL);
@@ -1023,6 +1079,7 @@ void tools_screen_create()
     t_flock             = make_tile(grid, "Flock");
     lv_obj_t *t_radar   = make_tile(grid, "Radar");
     lv_obj_t *t_pet     = make_tile(grid, "Pet");
+    t_duress            = make_tile(grid, "Duress");
 
     draw_wifi_icon(t_wifi);
     draw_analyzer_icon(t_analyze);
@@ -1039,6 +1096,7 @@ void tools_screen_create()
     draw_flock_icon(t_flock);
     draw_radar_icon(t_radar);
     draw_pet_icon(t_pet);
+    draw_duress_icon(t_duress);
 
     // Tesla CP tile opens the 315 MHz charge-port-open transmit screen.
     lv_obj_add_event_cb(t_tesla, [](lv_event_t *) { tesla_cp_screen_show(); }, LV_EVENT_CLICKED, NULL);
@@ -1071,6 +1129,10 @@ void tools_screen_create()
 
     // Pet tile opens the pwnpet mascot (meets nearby Pwnagotchis, reacts to events).
     lv_obj_add_event_cb(t_pet, [](lv_event_t *) { pet_screen_show(); }, LV_EVENT_CLICKED, NULL);
+
+    // Duress tile arms/disarms the shake-to-disguise mode (green when armed).
+    lv_obj_add_event_cb(t_duress, on_duress_clicked, LV_EVENT_CLICKED, NULL);
+    set_duress_tile_armed(stealth_armed());
 
     // TPMS tile opens the TPMS monitor screen.
     lv_obj_add_event_cb(t_tpms, [](lv_event_t *) { tpms_screen_show(); }, LV_EVENT_CLICKED, NULL);

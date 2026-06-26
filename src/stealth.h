@@ -32,3 +32,8 @@ void stealth_feed_accel_delta(float delta_g);
 
 // Polled from loop(): runs the 4-second long-press exit detector.
 void stealth_poll();
+
+// Restore armed + disguised state from NVS at boot. If the watch was disguised
+// when it was powered off, it comes back disguised (silently) — so a reboot in
+// hostile hands can't reveal the tooling; only the 4 s long-press disarms it.
+void stealth_load();
