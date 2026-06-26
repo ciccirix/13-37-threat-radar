@@ -13,6 +13,7 @@
 #include "wifi_screen.h"
 #include "analyze_screen.h"
 #include "threat_radar_screen.h"
+#include "pet_screen.h"
 #include <LilyGoLib.h>
 
 // Defined in main.cpp
@@ -912,6 +913,57 @@ static void draw_radar_icon(lv_obj_t *tile)
     lv_obj_align(blip, LV_ALIGN_TOP_MID, 28, 44);
 }
 
+// Pwnpet — a Tamagotchi-ish handheld with a little face (two eyes + a smile).
+static void draw_pet_icon(lv_obj_t *tile)
+{
+    lv_color_t body = lv_color_make(0x1d, 0x6f, 0x42);
+    lv_color_t face = lv_color_make(0x0a, 0x12, 0x0a);
+    lv_color_t eye  = lv_color_make(0x33, 0xdd, 0x88);
+
+    lv_obj_t *b = lv_obj_create(tile);
+    lv_obj_set_size(b, 104, 116);
+    lv_obj_set_style_radius(b, 26, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(b, body, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(b, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_border_color(b, lv_color_make(0x2c, 0xa0, 0x60), LV_PART_MAIN);
+    lv_obj_set_style_border_width(b, 2, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(b, 0, LV_PART_MAIN);
+    lv_obj_clear_flag(b, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_align(b, LV_ALIGN_TOP_MID, 0, 26);
+
+    lv_obj_t *f = lv_obj_create(tile);
+    lv_obj_set_size(f, 76, 64);
+    lv_obj_set_style_radius(f, 14, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(f, face, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(f, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_border_width(f, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(f, 0, LV_PART_MAIN);
+    lv_obj_clear_flag(f, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_align(f, LV_ALIGN_TOP_MID, 0, 44);
+
+    for (int i = 0; i < 2; i++) {
+        lv_obj_t *e = lv_obj_create(tile);
+        lv_obj_set_size(e, 12, 16);
+        lv_obj_set_style_radius(e, 6, LV_PART_MAIN);
+        lv_obj_set_style_bg_color(e, eye, LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(e, LV_OPA_COVER, LV_PART_MAIN);
+        lv_obj_set_style_border_width(e, 0, LV_PART_MAIN);
+        lv_obj_set_style_pad_all(e, 0, LV_PART_MAIN);
+        lv_obj_clear_flag(e, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_align(e, LV_ALIGN_TOP_MID, i == 0 ? -16 : 16, 58);
+    }
+
+    lv_obj_t *m = lv_obj_create(tile);
+    lv_obj_set_size(m, 28, 5);
+    lv_obj_set_style_radius(m, 2, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(m, eye, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(m, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_border_width(m, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(m, 0, LV_PART_MAIN);
+    lv_obj_clear_flag(m, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_align(m, LV_ALIGN_TOP_MID, 0, 84);
+}
+
 void tools_screen_create()
 {
     tools_screen = lv_obj_create(NULL);
@@ -970,6 +1022,7 @@ void tools_screen_create()
     t_eviltwin          = make_tile(grid, "Evil Twin");
     t_flock             = make_tile(grid, "Flock");
     lv_obj_t *t_radar   = make_tile(grid, "Radar");
+    lv_obj_t *t_pet     = make_tile(grid, "Pet");
 
     draw_wifi_icon(t_wifi);
     draw_analyzer_icon(t_analyze);
@@ -985,6 +1038,7 @@ void tools_screen_create()
     draw_eviltwin_icon(t_eviltwin);
     draw_flock_icon(t_flock);
     draw_radar_icon(t_radar);
+    draw_pet_icon(t_pet);
 
     // Tesla CP tile opens the 315 MHz charge-port-open transmit screen.
     lv_obj_add_event_cb(t_tesla, [](lv_event_t *) { tesla_cp_screen_show(); }, LV_EVENT_CLICKED, NULL);
@@ -1014,6 +1068,9 @@ void tools_screen_create()
 
     // Radar tile opens the Threat Radar spatio-temporal correlation screen.
     lv_obj_add_event_cb(t_radar, [](lv_event_t *) { threat_radar_screen_show(); }, LV_EVENT_CLICKED, NULL);
+
+    // Pet tile opens the pwnpet mascot (meets nearby Pwnagotchis, reacts to events).
+    lv_obj_add_event_cb(t_pet, [](lv_event_t *) { pet_screen_show(); }, LV_EVENT_CLICKED, NULL);
 
     // TPMS tile opens the TPMS monitor screen.
     lv_obj_add_event_cb(t_tpms, [](lv_event_t *) { tpms_screen_show(); }, LV_EVENT_CLICKED, NULL);

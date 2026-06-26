@@ -53,6 +53,7 @@
 #include "flock.h"
 #include "threat_radar.h"
 #include "threat_radar_screen.h"
+#include "pet_screen.h"
 #include "stealth.h"
 #include "matrix_bg.h"
 #include "nfc_icon.h"
@@ -1553,6 +1554,7 @@ void setup()
     settings_screen_create();
     tools_screen_create();
     threat_radar_screen_create();
+    pet_screen_create();
     tpms_screen_create();
     pager_screen_create();
     mouse_screen_create();
