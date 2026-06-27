@@ -70,7 +70,8 @@ jobs:
         with:
           tag_name: latest
           name: Latest build (main)
-          prerelease: true
+          prerelease: false
+          make_latest: true
           body: |
             Auto-built by CI from the latest commit on `main`.
 
