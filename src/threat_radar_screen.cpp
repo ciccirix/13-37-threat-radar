@@ -1,5 +1,6 @@
 #include "threat_radar_screen.h"
 #include "threat_radar.h"
+#include "phone_link.h"            // PHONE toggle — mirror the radar to a phone
 #include "tools_screen.h"          // tools_screen_show() for the back-gesture
 #include <lvgl.h>
 #include <stdio.h>
@@ -20,8 +21,22 @@ static lv_obj_t *s_screen = nullptr;
 static lv_obj_t *s_banner = nullptr;
 static lv_obj_t *s_banner_lbl = nullptr;
 static lv_obj_t *s_list   = nullptr;   // scrollable flex-column of rows
+static lv_obj_t *s_phone_btn = nullptr;
+static lv_obj_t *s_phone_lbl = nullptr;
 static lv_timer_t *s_timer = nullptr;
 static bool s_active = false;
+
+// PHONE button reflects the link state: grey = off, blue = advertising
+// (waiting for the phone), green = phone connected.
+static void update_phone_btn()
+{
+    lv_color_t c;
+    if (phone_link_connected())    c = lv_color_make(0x00, 0xCC, 0x66);
+    else if (phone_link_active())  c = lv_color_make(0x33, 0xBB, 0xFF);
+    else                           c = lv_color_make(0x66, 0x66, 0x66);
+    lv_obj_set_style_border_color(s_phone_btn, c, LV_PART_MAIN);
+    lv_obj_set_style_text_color(s_phone_lbl, c, LV_PART_MAIN);
+}
 
 #define TR_MAX_ROWS 16
 
@@ -84,6 +99,9 @@ static void add_row(const TrThreat *t)
 
 static void refresh()
 {
+    // Keep the PHONE button truthful — a phone can connect/drop at any time.
+    update_phone_btn();
+
     int top = threatradar_top_level();
     int n   = threatradar_threat_count();
 
@@ -136,6 +154,15 @@ static void on_clear(lv_event_t *)
     refresh();
 }
 
+static void on_phone(lv_event_t *)
+{
+    if (phone_link_active())
+        phone_link_stop();
+    else
+        phone_link_start();   // failure leaves it off; button stays grey
+    update_phone_btn();
+}
+
 static void on_gesture(lv_event_t *e)
 {
     lv_indev_t *indev = lv_event_get_indev(e);
@@ -185,7 +212,7 @@ void threat_radar_screen_create()
                           LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
     lv_obj_align(s_list, LV_ALIGN_TOP_MID, 0, 120);
 
-    // CLEAR button (new trip / panic wipe).
+    // CLEAR button (new trip / panic wipe), left half of the bottom row.
     lv_obj_t *clr = lv_obj_create(s_screen);
     lv_obj_set_size(clr, 160, 44);
     lv_obj_set_style_radius(clr, 22, LV_PART_MAIN);
@@ -195,7 +222,7 @@ void threat_radar_screen_create()
     lv_obj_set_style_border_width(clr, 1, LV_PART_MAIN);
     lv_obj_clear_flag(clr, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_add_flag(clr, LV_OBJ_FLAG_CLICKABLE);
-    lv_obj_align(clr, LV_ALIGN_BOTTOM_MID, 0, -28);
+    lv_obj_align(clr, LV_ALIGN_BOTTOM_MID, -88, -28);
     lv_obj_add_event_cb(clr, on_clear, LV_EVENT_CLICKED, NULL);
     lv_obj_t *clr_lbl = lv_label_create(clr);
     lv_obj_set_style_text_font(clr_lbl, &lv_font_montserrat_16, LV_PART_MAIN);
@@ -203,6 +230,24 @@ void threat_radar_screen_create()
     lv_label_set_text(clr_lbl, LV_SYMBOL_TRASH "  CLEAR");
     lv_obj_center(clr_lbl);
     lv_obj_add_flag(clr_lbl, LV_OBJ_FLAG_EVENT_BUBBLE);   // tap on label reaches the button
+
+    // PHONE toggle (BLE link to the companion app), right half.
+    s_phone_btn = lv_obj_create(s_screen);
+    lv_obj_set_size(s_phone_btn, 160, 44);
+    lv_obj_set_style_radius(s_phone_btn, 22, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(s_phone_btn, lv_color_make(0x22, 0x22, 0x22), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(s_phone_btn, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_border_width(s_phone_btn, 1, LV_PART_MAIN);
+    lv_obj_clear_flag(s_phone_btn, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_add_flag(s_phone_btn, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_align(s_phone_btn, LV_ALIGN_BOTTOM_MID, 88, -28);
+    lv_obj_add_event_cb(s_phone_btn, on_phone, LV_EVENT_CLICKED, NULL);
+    s_phone_lbl = lv_label_create(s_phone_btn);
+    lv_obj_set_style_text_font(s_phone_lbl, &lv_font_montserrat_16, LV_PART_MAIN);
+    lv_label_set_text(s_phone_lbl, LV_SYMBOL_BLUETOOTH "  PHONE");
+    lv_obj_center(s_phone_lbl);
+    lv_obj_add_flag(s_phone_lbl, LV_OBJ_FLAG_EVENT_BUBBLE);
+    update_phone_btn();
 
     // Slow self-refresh while the screen is in front.
     s_timer = lv_timer_create(on_timer, 1500, NULL);

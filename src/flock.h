@@ -6,6 +6,12 @@
 // device matched (and was newly logged after dedup).
 bool flock_check(const uint8_t *mac6, int8_t rssi, const char *name, char source);
 
+// Pure classifier: returns the surveillance/camera vendor for a MAC or advertised
+// name, or nullptr if neither the OUI table nor the name-prefix list matches.
+// No dedup / logging / threat-radar side effects, so the Cameras live-scan screen
+// can call it on every beacon and BLE advert.
+const char *flock_classify(const uint8_t *mac6, const char *name);
+
 int  flock_get_count();
 void flock_bg_tick();
 void flock_reset_count();

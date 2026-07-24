@@ -119,6 +119,17 @@ static const char *name_match(const char *name)
     return nullptr;
 }
 
+// Pure classifier used by the Cameras live-scan screen. Same OUI + name-prefix
+// logic as flock_check(), but with no dedup / logging / threat-radar side
+// effects, so it can run on every beacon and BLE advert.
+const char *flock_classify(const uint8_t *mac6, const char *name)
+{
+    int oui_idx = oui_match(mac6);
+    if (oui_idx >= 0) return oui_to_vendor(oui_idx);
+    if (name && name[0]) return name_match(name);
+    return nullptr;
+}
+
 static bool dedup_check_and_add(const uint8_t *mac)
 {
     uint32_t now = millis();

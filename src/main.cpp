@@ -3,8 +3,10 @@
 #include <LV_Helper.h>
 #include <bosch/BoschSensorDataHelper.hpp>
 #include "esp_wifi.h"
+#include <esp_system.h>   // esp_reset_reason() — boot diagnostic
 #include <time.h>
 #include <math.h>
+#include "boot_skull_img.h"   // fisherman-skull boot splash (ported from Marauder C5)
 #include "gps_screen.h"
 #include "lora_screen.h"
 #include "meshtastic.h"
@@ -17,6 +19,9 @@
 #include "settings_screen.h"
 #include "screenshot.h"
 #include "tools_screen.h"
+#include "camera_screen.h"
+#include "deauther_screen.h"
+#include "waterfall_screen.h"
 #include "tpms_screen.h"
 #include "timezone.h"
 #include "tpms.h"
@@ -53,6 +58,7 @@
 #include "flock.h"
 #include "threat_radar.h"
 #include "threat_radar_screen.h"
+#include "phone_link.h"
 #include "pet_screen.h"
 #include "handshake.h"
 #include "stealth.h"
@@ -1191,23 +1197,49 @@ void setup()
     Serial.printf("\n%s firmware v%s  (T-Watch Ultra)  build %s %s\n",
                   FW_NAME, FW_VERSION, __DATE__, __TIME__);
 
+    // Why did we just boot? Reboots are otherwise "silent" — this names the last
+    // reset cause so a tester's crash tells us WHAT to chase (BROWNOUT = weak
+    // battery / power sag during a radio TX; PANIC = a firmware fault, pair with
+    // the esp32_exception_decoder backtrace above; TASK_WDT/INT_WDT = a loop
+    // blocked too long). Free heap gives a baseline to spot a slow leak.
+    {
+        const char *why;
+        switch (esp_reset_reason()) {
+            case ESP_RST_POWERON:   why = "POWERON (cold boot)";        break;
+            case ESP_RST_SW:        why = "SW (esp_restart)";           break;
+            case ESP_RST_PANIC:     why = "PANIC (exception/abort)";    break;
+            case ESP_RST_INT_WDT:   why = "INT_WDT (interrupt watchdog)"; break;
+            case ESP_RST_TASK_WDT:  why = "TASK_WDT (loop stalled)";    break;
+            case ESP_RST_WDT:       why = "WDT (other watchdog)";       break;
+            case ESP_RST_BROWNOUT:  why = "BROWNOUT (voltage sag)";     break;
+            case ESP_RST_DEEPSLEEP: why = "DEEPSLEEP wake";             break;
+            case ESP_RST_EXT:       why = "EXT (external reset)";       break;
+            default:                why = "UNKNOWN";                    break;
+        }
+        Serial.printf("[boot] reset reason: %s | free heap %u B | largest block %u B\n",
+                      why, (unsigned)ESP.getFreeHeap(),
+                      (unsigned)ESP.getMaxAllocHeap());
+    }
+
     instance.begin();
     instance.powerControl(POWER_NFC, false); // ensure NFC is off on boot
     beginLvglHelper(instance);
 
-    // Boot splash — brand the firmware on the panel before the clock comes up.
-    // Backlight on now so it's visible; the splash stays up through the rest of
-    // setup (screen construction) and is swapped for the clock below, held to a
-    // minimum visible time. Uses the large clock font (reads like a time).
+    // Boot splash — the Marauder C5 "fisherman-skull" logo on black, with the
+    // firmware name tucked at the bottom as a support anchor. Backlight on now so
+    // it's visible; the splash stays up through the rest of setup (screen
+    // construction) and is swapped for the clock below, held to a minimum time.
     instance.setBrightness(DEVICE_MAX_BRIGHTNESS_LEVEL);
     lv_obj_t *boot_splash = lv_obj_create(NULL);
     lv_obj_set_style_bg_color(boot_splash, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_border_width(boot_splash, 0, LV_PART_MAIN);
+    lv_obj_t *boot_logo = lv_image_create(boot_splash);
+    lv_image_set_src(boot_logo, &boot_skull_img);
+    lv_obj_align(boot_logo, LV_ALIGN_CENTER, 0, -16);   // nudged up to leave room for the name
     lv_obj_t *boot_brand = lv_label_create(boot_splash);
     lv_label_set_text(boot_brand, FW_NAME);
     lv_obj_set_style_text_color(boot_brand, lv_color_white(), LV_PART_MAIN);
-    lv_obj_set_style_text_font(boot_brand, &lv_font_montserrat_clock_96, LV_PART_MAIN);
-    lv_obj_center(boot_brand);
+    lv_obj_align(boot_brand, LV_ALIGN_BOTTOM_MID, 0, -24);
     lv_scr_load(boot_splash);
     lv_refr_now(NULL);                       // paint now; no timer handler in setup yet
     uint32_t boot_splash_ms = millis();
@@ -1570,6 +1602,9 @@ void setup()
     analyze_screen_create();
     bt_analyze_screen_create();
     lora_analyze_screen_create();
+    camera_screen_create();
+    deauther_screen_create();
+    waterfall_screen_create();
     stopwatch_screen_create();
     timer_screen_create();
     alarm_screen_create();
@@ -1727,6 +1762,20 @@ void loop()
                 bt_analyze_screen_stop();
                 lora_analyze_screen_stop();
                 tools_screen_show();
+            } else if (camera_screen_is_active()) {
+                // Drop the WiFi-beacon + BLE consumers so the radio isn't left
+                // scanning after we leave the live camera list.
+                camera_screen_stop();
+                tools_screen_show();
+            } else if (deauther_screen_is_active()) {
+                // Halt any in-progress deauth flood and tear the radio back down.
+                deauther_screen_stop();
+                tools_screen_show();
+            } else if (waterfall_screen_is_active()) {
+                // Release the promiscuous WiFi so the band analyzer isn't left
+                // channel-locked after we leave.
+                waterfall_screen_stop();
+                tools_screen_show();
             } else if (lv_screen_active() == clock_screen) {
                 settings_screen_show();
             } else {
@@ -1780,6 +1829,9 @@ void loop()
             threatradar_bg_tick();  // correlate detector hits into follow-scores
             handshake_bg_tick();    // drain captured EAPOL frames to /pwn/*.pcap
         }
+        // Outside the USB-SD gate: only reads the radar store + GATT posts,
+        // never touches the filesystem — the phone keeps updating either way.
+        phone_link_bg_tick();
     }
     // Yield to LVGL between SD-heavy batches. The display uses partial
     // refresh with ~6 tiles per screen, one tile per lv_task_handler call;

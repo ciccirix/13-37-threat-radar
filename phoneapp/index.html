@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0a">
+<title>13-37 · Threat Radar</title>
+<style>
+  :root {
+    --bg: #0a0a0a; --panel: #141414; --line: #2a2a2a;
+    --txt: #cccccc; --dim: #888888; --faint: #555555;
+    --cyan: #33bbff; --green: #00cc66; --amber: #ffcc00;
+    --orange: #ff6600; --red: #ff2222;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    background: var(--bg); color: var(--txt);
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    min-height: 100vh; padding: 16px;
+    padding-top: calc(16px + env(safe-area-inset-top));
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+  header { text-align: center; margin-bottom: 14px; }
+  header h1 { font-size: 17px; letter-spacing: 3px; color: var(--cyan); font-weight: 600; }
+  header .sub { font-size: 11px; color: var(--faint); margin-top: 3px; letter-spacing: 1px; }
+
+  .btnrow { display: flex; gap: 10px; margin-bottom: 14px; }
+  button {
+    flex: 1; padding: 13px 8px; border-radius: 22px;
+    background: #222; color: var(--txt); border: 1px solid var(--faint);
+    font: inherit; font-size: 14px; letter-spacing: 1px; cursor: pointer;
+  }
+  button:disabled { opacity: .35; }
+  #btnConnect.on { border-color: var(--green); color: var(--green); }
+
+  #banner {
+    border-radius: 12px; padding: 16px 12px; text-align: center;
+    font-size: 16px; font-weight: 700; letter-spacing: 1px;
+    background: #1c1c1c; color: var(--dim); margin-bottom: 8px;
+    border: 1px solid var(--line);
+  }
+  #banner.ok      { background: #00331b; color: var(--green);  border-color: var(--green); }
+  #banner.watch   { background: #332900; color: var(--amber);  border-color: var(--amber); }
+  #banner.alert   { background: #330a0a; color: var(--red);    border-color: var(--red); }
+  @keyframes flash { 0%,100% { filter: brightness(1); } 50% { filter: brightness(2.2); } }
+  #banner.alert { animation: flash 1s infinite; }
+
+  #statusline {
+    display: flex; justify-content: space-between; font-size: 11px;
+    color: var(--faint); padding: 0 4px; margin-bottom: 14px;
+  }
+
+  .card {
+    background: var(--panel); border: 2px solid var(--faint);
+    border-radius: 10px; padding: 10px 12px 10px 16px; margin-bottom: 10px;
+    position: relative; overflow: hidden;
+  }
+  .card::before {
+    content: ""; position: absolute; left: 4px; top: 14px; bottom: 14px;
+    width: 5px; border-radius: 3px; background: var(--lvl, var(--faint));
+  }
+  .card.stale { opacity: .55; }
+  .card .head { font-size: 14px; font-weight: 700; color: var(--lvl, var(--dim)); }
+  .card .head .tag { font-weight: 400; font-size: 11px; color: var(--faint); }
+  .card .metrics { font-size: 12px; color: var(--txt); margin-top: 5px; }
+  .card .foot { font-size: 11px; color: var(--dim); margin-top: 4px; }
+  .card .foot a { color: var(--cyan); text-decoration: none; }
+
+  #empty {
+    text-align: center; color: var(--faint); font-size: 12px;
+    line-height: 1.7; padding: 26px 10px; border: 1px dashed var(--line);
+    border-radius: 10px;
+  }
+  #log { font-size: 10px; color: var(--faint); margin-top: 16px; text-align: center; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>13-37 · THREAT RADAR</h1>
+  <div class="sub">T-WATCH ULTRA · PHONE LINK</div>
+</header>
+
+<div class="btnrow">
+  <button id="btnConnect">⌚ CONNETTI</button>
+  <button id="btnReset" disabled>🗑 AZZERA</button>
+</div>
+
+<div id="banner">— non connesso —</div>
+<div id="statusline">
+  <span id="stConn">link: off</span>
+  <span id="stGps">gps: --</span>
+  <span id="stUp">watch: --</span>
+</div>
+
+<div id="list"></div>
+<div id="empty" class="hidden">
+  Nessun dispositivo in co-movimento.<br>
+  I tracker visti in un solo punto sono<br>
+  installazioni fisse e non contano.<br>
+  Un vero pedinatore accumula punteggio<br>
+  mentre viaggia con te.
+</div>
+
+<div id="log">in attesa</div>
+
+<script>
+"use strict";
+// Deve combaciare con phone_link.cpp sul watch.
+const SVC_UUID     = "13370000-1337-4001-8000-746872616461";
+const STATUS_UUID  = "13370001-1337-4001-8000-746872616461";
+const THREATS_UUID = "13370002-1337-4001-8000-746872616461";
+const CMD_UUID     = "13370003-1337-4001-8000-746872616461";
+
+const CATEGORIE = ["AirTag", "Flipper", "Skimmer", "Flock", "Evil Twin", "Veicolo"];
+const LIVELLI   = ["VISTO", "POSSIBILE", "PROBABILE", "CONFERMATO"];
+const LVL_COLOR = ["#444444", "#ffcc00", "#ff6600", "#ff2222"];
+
+let device = null, statusChr = null, threatsChr = null, cmdChr = null;
+let lastThreatsSeq = -1, lastAlertSeq = -1, firstStatus = true;
+let audioCtx = null, wakeLock = null;
+
+const $ = id => document.getElementById(id);
+const log = m => { $("log").textContent = m; };
+
+// ------------------------------------------------------------------ connect
+$("btnConnect").addEventListener("click", async () => {
+  if (device && device.gatt.connected) { device.gatt.disconnect(); return; }
+  try {
+    // L'AudioContext va creato dentro un gesto utente, o iOS lo tiene muto.
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    log("scansione…");
+    device = await navigator.bluetooth.requestDevice({
+      filters: [{ namePrefix: "13-37" }],
+      optionalServices: [SVC_UUID]
+    });
+    device.addEventListener("gattserverdisconnected", onDisconnected);
+
+    log("connessione…");
+    const server = await device.gatt.connect();
+    const svc = await server.getPrimaryService(SVC_UUID);
+    statusChr  = await svc.getCharacteristic(STATUS_UUID);
+    threatsChr = await svc.getCharacteristic(THREATS_UUID);
+    cmdChr     = await svc.getCharacteristic(CMD_UUID);
+
+    firstStatus = true;
+    await statusChr.startNotifications();
+    statusChr.addEventListener("characteristicvaluechanged",
+                               e => handleStatus(e.target.value));
+    handleStatus(await statusChr.readValue());   // stato iniziale senza attendere il notify
+
+    $("btnConnect").textContent = "⌚ CONNESSO";
+    $("btnConnect").classList.add("on");
+    $("btnReset").disabled = false;
+    $("stConn").textContent = "link: on";
+    log("connesso a " + (device.name || "13-37"));
+    requestWakeLock();
+  } catch (err) {
+    log("errore: " + err.message);
+  }
+});
+
+function onDisconnected() {
+  statusChr = threatsChr = cmdChr = null;
+  $("btnConnect").textContent = "⌚ CONNETTI";
+  $("btnConnect").classList.remove("on");
+  $("btnReset").disabled = true;
+  $("stConn").textContent = "link: off";
+  setBanner("", "— disconnesso —");
+  log("disconnesso dal watch");
+  if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
+}
+
+async function requestWakeLock() {
+  try { if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); }
+  catch (_) { /* facoltativo: senza wake lock lo schermo può spegnersi */ }
+}
+
+// ------------------------------------------------------------------- status
+// STATUS: [ver, count, top_level, alert_seq, threats_seq, flags, up_lo, up_hi]
+async function handleStatus(dv) {
+  if (dv.byteLength < 8 || dv.getUint8(0) !== 1) return;
+  const count      = dv.getUint8(1);
+  const top        = dv.getUint8(2);
+  const alertSeq   = dv.getUint8(3);
+  const threatsSeq = dv.getUint8(4);
+  const flags      = dv.getUint8(5);
+  const upMin      = dv.getUint16(6, true);
+
+  $("stGps").textContent = "gps: " + ((flags & 1) ? "fix ✓" : "spento");
+  $("stUp").textContent  = "watch: " + Math.floor(upMin / 60) + "h" +
+                           String(upMin % 60).padStart(2, "0") + "m";
+
+  if (top >= 2)       setBanner("alert", "⚠ TI STANNO SEGUENDO");
+  else if (top === 1) setBanner("watch", "👁 possibile pedinamento — osserva");
+  else                setBanner("ok",    "✓ tutto tranquillo (" + count + " contatti)");
+
+  if (!firstStatus && alertSeq !== lastAlertSeq) raiseAlarm();
+  lastAlertSeq = alertSeq;
+
+  if (threatsSeq !== lastThreatsSeq) {
+    lastThreatsSeq = threatsSeq;
+    await refreshThreats();
+  }
+  firstStatus = false;
+}
+
+function setBanner(cls, text) {
+  const b = $("banner");
+  b.className = cls;
+  b.textContent = text;
+}
+
+// ------------------------------------------------------------------ threats
+// THREATS: [ver, count] + count × record da 30 byte (little-endian, packed).
+async function refreshThreats() {
+  if (!threatsChr) return;
+  let dv;
+  try { dv = await threatsChr.readValue(); }
+  catch (err) { log("lettura minacce fallita: " + err.message); return; }
+  if (dv.byteLength < 2 || dv.getUint8(0) !== 1) return;
+
+  const n = dv.getUint8(1);
+  const list = $("list");
+  list.innerHTML = "";
+  $("empty").classList.toggle("hidden", n > 0);
+
+  for (let i = 0; i < n; i++) {
+    const o = 2 + i * 30;
+    if (o + 30 > dv.byteLength) break;
+    const mac = [...Array(6)].map((_, j) =>
+      dv.getUint8(o + j).toString(16).padStart(2, "0")).join(":").toUpperCase();
+    const cat      = dv.getUint8(o + 6);
+    const lvl      = Math.min(dv.getUint8(o + 7), 3);
+    const wp       = dv.getUint8(o + 8);
+    const rssi     = dv.getInt8(o + 9);
+    const flags    = dv.getUint8(o + 10);
+    const spanM    = dv.getUint16(o + 12, true);
+    const spanMin  = dv.getUint16(o + 14, true);
+    const lat      = dv.getFloat32(o + 16, true);
+    const lon      = dv.getFloat32(o + 20, true);
+    let   first    = "";
+    for (let j = 0; j < 6; j++) {
+      const c = dv.getUint8(o + 24 + j);
+      if (!c) break;
+      first += String.fromCharCode(c);
+    }
+    const active   = !!(flags & 1), community = !!(flags & 2), familiar = !!(flags & 4);
+
+    const card = document.createElement("div");
+    card.className = "card" + (active ? "" : " stale");
+    const color = familiar ? "#556655" : LVL_COLOR[lvl];
+    card.style.setProperty("--lvl", color);
+    card.style.borderColor = color;
+
+    const mapLink = (lat || lon)
+      ? ` · <a href="https://maps.apple.com/?ll=${lat.toFixed(5)},${lon.toFixed(5)}&q=Primo+avvistamento">mappa</a>`
+      : "";
+    card.innerHTML =
+      `<div class="head">${community ? "🔔 " : ""}${CATEGORIE[cat] || "?"} · ${LIVELLI[lvl]}` +
+      `<span class="tag">${familiar ? " (tuo)" : (active ? "" : " (perso)")}</span></div>` +
+      `<div class="metrics">📍 ${spanM} m · ${spanMin} min · ${wp} punti</div>` +
+      `<div class="foot">visto ${first || "--"} · ${rssi} dBm · ${mac}${mapLink}</div>`;
+    list.appendChild(card);
+  }
+  log("aggiornato " + new Date().toLocaleTimeString("it-IT"));
+}
+
+// -------------------------------------------------------------------- alarm
+// Niente API di vibrazione su iOS: sirena WebAudio + flash del banner (già
+// animato dalla classe .alert). navigator.vibrate resta per Android.
+function raiseAlarm() {
+  if (navigator.vibrate) navigator.vibrate([300, 100, 300, 100, 600]);
+  if (!audioCtx) return;
+  const t0 = audioCtx.currentTime;
+  for (let i = 0; i < 3; i++) {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = "square";
+    osc.frequency.setValueAtTime(880, t0 + i * 0.5);
+    osc.frequency.linearRampToValueAtTime(1245, t0 + i * 0.5 + 0.4);
+    gain.gain.setValueAtTime(0.25, t0 + i * 0.5);
+    gain.gain.linearRampToValueAtTime(0.0, t0 + i * 0.5 + 0.45);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(t0 + i * 0.5);
+    osc.stop(t0 + i * 0.5 + 0.45);
+  }
+}
+
+// -------------------------------------------------------------------- reset
+$("btnReset").addEventListener("click", async () => {
+  if (!cmdChr) return;
+  if (!confirm("Azzerare la memoria contatti del Threat Radar sul watch?")) return;
+  try {
+    await cmdChr.writeValue(Uint8Array.of(0x01));
+    log("memoria contatti azzerata");
+  } catch (err) {
+    log("azzeramento fallito: " + err.message);
+  }
+});
+
+// Web Bluetooth mancante (Safari normale): spiega subito invece di fallire poi.
+if (!navigator.bluetooth) {
+  setBanner("watch", "browser senza Web Bluetooth");
+  log("apri questa pagina in Bluefy (iOS) o Chrome (Android/desktop)");
+  $("btnConnect").disabled = true;
+}
+</script>
+</body>
+</html>

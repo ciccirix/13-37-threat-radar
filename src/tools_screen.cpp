@@ -16,6 +16,9 @@
 #include "pet_screen.h"
 #include "stealth.h"
 #include "handshake.h"
+#include "camera_screen.h"
+#include "deauther_screen.h"
+#include "waterfall_screen.h"
 #include <LilyGoLib.h>
 
 // Defined in main.cpp
@@ -1068,6 +1071,123 @@ static void draw_handshake_icon(lv_obj_t *tile)
     lv_obj_align(pkt, LV_ALIGN_TOP_MID, 0, 124);
 }
 
+// Cameras -- camera silhouette (body + lens + mount) with a small green WiFi
+// glyph, for the live surveillance-camera scanner (WiFi + BLE). Distinct from
+// the Flock detector tile by the green "networked scan" glyph.
+static void draw_camera_scan_icon(lv_obj_t *tile)
+{
+    lv_color_t body  = lv_color_make(0x33, 0x33, 0x33);
+    lv_color_t edge  = lv_color_make(0x66, 0x66, 0x66);
+    lv_color_t ring  = lv_color_make(0x88, 0x88, 0x88);
+    lv_color_t lens  = lv_color_make(0x11, 0x66, 0x55);
+    lv_color_t glint = lv_color_make(0xAA, 0xFF, 0xDD);
+
+    lv_obj_t *b = lv_obj_create(tile);
+    lv_obj_set_size(b, 88, 56);
+    lv_obj_set_style_radius(b, 6, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(b, body, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(b, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_border_color(b, edge, LV_PART_MAIN);
+    lv_obj_set_style_border_width(b, 2, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(b, 0, LV_PART_MAIN);
+    lv_obj_clear_flag(b, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_align(b, LV_ALIGN_TOP_MID, 0, 44);
+
+    lv_obj_t *lr = lv_obj_create(tile);
+    lv_obj_set_size(lr, 36, 36);
+    lv_obj_set_style_radius(lr, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(lr, ring, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(lr, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_border_width(lr, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(lr, 0, LV_PART_MAIN);
+    lv_obj_clear_flag(lr, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_align(lr, LV_ALIGN_TOP_MID, 0, 54);
+
+    lv_obj_t *lf = lv_obj_create(tile);
+    lv_obj_set_size(lf, 26, 26);
+    lv_obj_set_style_radius(lf, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(lf, lens, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(lf, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_border_width(lf, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(lf, 0, LV_PART_MAIN);
+    lv_obj_clear_flag(lf, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_align(lf, LV_ALIGN_TOP_MID, 0, 59);
+
+    lv_obj_t *g = lv_obj_create(tile);
+    lv_obj_set_size(g, 7, 7);
+    lv_obj_set_style_radius(g, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(g, glint, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(g, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_border_width(g, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(g, 0, LV_PART_MAIN);
+    lv_obj_clear_flag(g, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_align(g, LV_ALIGN_TOP_MID, -6, 62);
+
+    lv_obj_t *m = lv_obj_create(tile);
+    lv_obj_set_size(m, 18, 10);
+    lv_obj_set_style_radius(m, 2, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(m, body, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(m, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_border_color(m, edge, LV_PART_MAIN);
+    lv_obj_set_style_border_width(m, 2, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(m, 0, LV_PART_MAIN);
+    lv_obj_clear_flag(m, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_align(m, LV_ALIGN_TOP_MID, 0, 35);
+
+    lv_obj_t *w = lv_label_create(tile);
+    lv_obj_set_style_text_color(w, lv_color_make(0x33, 0xDD, 0x88), LV_PART_MAIN);
+    lv_obj_set_style_text_font(w, &lv_font_montserrat_20, LV_PART_MAIN);
+    lv_label_set_text(w, LV_SYMBOL_WIFI);
+    lv_obj_align(w, LV_ALIGN_TOP_RIGHT, -16, 30);
+}
+
+// Deauth -- red WiFi glyph over a burst of red "packets", for the dedicated
+// deauthentication transmitter.
+static void draw_deauth_icon(lv_obj_t *tile)
+{
+    lv_color_t red = lv_color_make(0xE0, 0x33, 0x33);
+
+    lv_obj_t *w = lv_label_create(tile);
+    lv_obj_set_style_text_color(w, red, LV_PART_MAIN);
+    lv_obj_set_style_text_font(w, &lv_font_montserrat_48, LV_PART_MAIN);
+    lv_label_set_text(w, LV_SYMBOL_WIFI);
+    lv_obj_align(w, LV_ALIGN_TOP_MID, 0, 40);
+
+    const int xs[5] = { -40, -20, 0, 20, 40 };
+    for (int i = 0; i < 5; i++) {
+        lv_obj_t *p = lv_obj_create(tile);
+        lv_obj_set_size(p, 14, 10);
+        lv_obj_set_style_radius(p, 2, LV_PART_MAIN);
+        lv_obj_set_style_bg_color(p, red, LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(p, (i == 2) ? LV_OPA_COVER : LV_OPA_50, LV_PART_MAIN);
+        lv_obj_set_style_border_width(p, 0, LV_PART_MAIN);
+        lv_obj_set_style_pad_all(p, 0, LV_PART_MAIN);
+        lv_obj_clear_flag(p, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_align(p, LV_ALIGN_TOP_MID, xs[i], 120);
+    }
+}
+
+// Waterfall -- cascata di righe colorate (blu->rosso, palette ESP32-DIV) per
+// l'Analizzatore Banda FFT (port identico del waterfall del Marauder C5).
+static void draw_waterfall_icon(lv_obj_t *tile)
+{
+    static const uint32_t cols[7] = {
+        0x1133AA, 0x2299CC, 0x22CC66, 0xCCCC22, 0xFF8822, 0xFF3322, 0xF0F0F0
+    };
+    for (int i = 0; i < 7; i++) {
+        lv_obj_t *r = lv_obj_create(tile);
+        lv_obj_set_size(r, 96, 12);
+        lv_obj_set_style_radius(r, 2, LV_PART_MAIN);
+        uint32_t c = cols[i];
+        lv_obj_set_style_bg_color(r, lv_color_make((c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF), LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(r, LV_OPA_COVER, LV_PART_MAIN);
+        lv_obj_set_style_border_width(r, 0, LV_PART_MAIN);
+        lv_obj_set_style_pad_all(r, 0, LV_PART_MAIN);
+        lv_obj_clear_flag(r, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_align(r, LV_ALIGN_TOP_MID, 0, 34 + i * 15);
+    }
+}
+
 void tools_screen_create()
 {
     tools_screen = lv_obj_create(NULL);
@@ -1129,6 +1249,9 @@ void tools_screen_create()
     lv_obj_t *t_pet     = make_tile(grid, "Pet");
     t_duress            = make_tile(grid, "Duress");
     t_handshake         = make_tile(grid, "Pwn");
+    lv_obj_t *t_cameras = make_tile(grid, "Cameras");
+    lv_obj_t *t_deauth  = make_tile(grid, "Deauth");
+    lv_obj_t *t_waterfall = make_tile(grid, "Waterfall");
 
     draw_wifi_icon(t_wifi);
     draw_analyzer_icon(t_analyze);
@@ -1147,6 +1270,9 @@ void tools_screen_create()
     draw_pet_icon(t_pet);
     draw_duress_icon(t_duress);
     draw_handshake_icon(t_handshake);
+    draw_camera_scan_icon(t_cameras);
+    draw_deauth_icon(t_deauth);
+    draw_waterfall_icon(t_waterfall);
 
     // Tesla CP tile opens the 315 MHz charge-port-open transmit screen.
     lv_obj_add_event_cb(t_tesla, [](lv_event_t *) { tesla_cp_screen_show(); }, LV_EVENT_CLICKED, NULL);
@@ -1208,6 +1334,15 @@ void tools_screen_create()
 
     // Analyze tile opens the WiFi channel utilisation visualisation.
     lv_obj_add_event_cb(t_analyze, [](lv_event_t *) { analyze_screen_show(); }, LV_EVENT_CLICKED, NULL);
+
+    // Cameras tile opens the live surveillance-camera scanner (WiFi + BLE).
+    lv_obj_add_event_cb(t_cameras, [](lv_event_t *) { camera_screen_show(); }, LV_EVENT_CLICKED, NULL);
+
+    // Deauth tile opens the dedicated deauthentication transmitter.
+    lv_obj_add_event_cb(t_deauth, [](lv_event_t *) { deauther_screen_show(); }, LV_EVENT_CLICKED, NULL);
+
+    // Waterfall tile opens the FFT band analyzer (identical to the Marauder C5).
+    lv_obj_add_event_cb(t_waterfall, [](lv_event_t *) { waterfall_screen_show(); }, LV_EVENT_CLICKED, NULL);
 
     // lv_obj_create() creates objects with LV_OBJ_FLAG_CLICKABLE set by
     // default, so the icon shapes inside each tile would otherwise swallow

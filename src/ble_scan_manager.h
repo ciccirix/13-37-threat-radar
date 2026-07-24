@@ -21,6 +21,23 @@ typedef void (*ble_scan_cb_t)(esp_ble_gap_cb_param_t *param);
 // consumer table is full (capacity 4 — raise BLE_SCAN_MAX_CONSUMERS if needed).
 bool ble_scan_add(ble_scan_cb_t cb);
 
+// --- non-scanning stack users (GATT server / advertiser) --------------------
+// Hold the BT controller + Bluedroid stack up WITHOUT starting a scan. Shares
+// the same lifecycle as the scan consumers: the stack comes up on the first
+// hold-or-consumer and is torn down when the last of either leaves. Lets the
+// phone link advertise on an otherwise idle radio, or ride along while the
+// detectors scan.
+bool ble_stack_acquire();
+void ble_stack_release();
+
+// Single forward slot for GAP events beyond scan results (advertising
+// complete, scan-response set, adv start/stop). The manager owns the one GAP
+// callback the stack offers; an advertiser registers here to see every event
+// and picks out the ones it cares about. Set nullptr to detach.
+typedef void (*ble_gap_forward_t)(esp_gap_ble_cb_event_t event,
+                                  esp_ble_gap_cb_param_t *param);
+void ble_gap_forward_set(ble_gap_forward_t cb);
+
 // Unregister a consumer. The controller is torn down when the last consumer
 // is removed.
 void ble_scan_remove(ble_scan_cb_t cb);

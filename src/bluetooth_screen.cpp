@@ -1,5 +1,6 @@
 #include "bluetooth_screen.h"
 #include "ble_scan_manager.h"
+#include "phone_link.h"
 #include <LilyGoLib.h>
 #include <esp_bt.h>
 #include <esp_bt_device.h>
@@ -159,10 +160,9 @@ static void on_bt_update(lv_timer_t *)
     // that here rather than reading a runtime value that doesn't exist.
     lv_label_set_text(val_scan_type, ble_scan_active() ? "Passive" : "--");
 
-    // The watch never accepts incoming connections (no GATT server
-    // surface exposed); hard-coded zero is honest and lets the user know
-    // they shouldn't expect to pair their phone with the watch.
-    lv_label_set_text(val_connections, "0");
+    // The only inbound surface is the Threat Radar phone link — show its
+    // GATT connection so the user can tell the companion app is attached.
+    lv_label_set_text(val_connections, phone_link_connected() ? "1" : "0");
 }
 
 static void on_toggle(lv_event_t *)
