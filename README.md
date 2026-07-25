@@ -26,11 +26,11 @@
 
 A Tamagotchi-style **goldfish** that swims the airwaves. It meets nearby Pwnagotchi units over their `DE:AD:BE:EF:DE:AD` advertisement beacons (so it greets your real Pi), turns wary when Threat Radar spots a tail, and — with passive capture armed from the **Pwn** tile — *eats* the WPA handshakes / PMKIDs it catches, logging them to `/pwn/<ts>.pcap` for offline cracking (`hashcat -m 22000`). Level, XP and friends-met persist to the SD card. Strictly passive — no deauth — and for authorized testing only.
 
-| pwnpet |
-| :---: |
-| <img src="img/pwnpet.png" width="300" alt="pwnpet goldfish screen"> |
+| pwnpet | grows with XP |
+| :---: | :---: |
+| <img src="img/pwnpet.png" width="230" alt="pwnpet real goldfish screen"> | <img src="img/pwnpet_growth.gif" width="230" alt="the pwnfish growing with XP"> |
 
-> Rendered at the watch's native 410×502 — the on-device fish is an LVGL approximation drawn from primitives.
+> Real goldfish rendered at the watch's native 410×502 — the on-device pet swims (frames streamed from the SD card) and physically grows with XP.
 
 ---
 ## Purchase
