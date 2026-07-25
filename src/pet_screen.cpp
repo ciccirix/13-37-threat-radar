@@ -64,6 +64,14 @@ static uint32_t s_last_save   = 0;
 static int level_of(long xp) { return 1 + (int)(xp / 100); }
 static int xp_into(long xp)  { return (int)(xp % 100); }
 
+// The fish grows for REAL by advancing through life-stage frames on the SD card
+// (young -> adult), NOT by scaling one image. The frames are FISH_STAGES groups
+// of FISH_PER_STAGE consecutive frames; the level picks the stage (an older,
+// differently-shaped, bigger fish) and the stage's frames cycle for the swim.
+#define FISH_STAGES     5
+#define FISH_PER_STAGE  3
+static int s_stage = 0;   // current life stage (0 = juvenile)
+
 static void pet_wifi_noop(const WifiBeacon *b) { (void)b; }
 
 static void load_xp()
@@ -141,11 +149,15 @@ static void refresh()
     lv_label_set_text_fmt(s_stats, "PWND %d   friends %d   xp %ld",
         handshake_pwnd_count(), peers, s_xp);
 
-    // Physical growth: baby at level 1 -> full-size as XP climbs. The image is
-    // always scaled DOWN from its native 384px (256 = 1.0x = full size) so it
-    // stays crisp. Smooth diminishing curve.
-    float grow = 0.60f + 0.40f * (1.0f - expf(-(float)s_xp / 700.0f));
-    lv_image_set_scale(s_fish, (uint32_t)(256.0f * grow + 0.5f));
+    // Real growth: the fish advances through life-stage frames (young -> adult)
+    // as the level climbs — a bigger, differently-shaped fish, not a scaled photo.
+    int lvl = level_of(s_xp);
+    int stage = (lvl - 1) / 3;                        // ~3 levels per stage
+    if (stage >= FISH_STAGES) stage = FISH_STAGES - 1;
+    if (stage < 0) stage = 0;
+    int loaded_stages = s_nframes / FISH_PER_STAGE;
+    if (loaded_stages > 0 && stage > loaded_stages - 1) stage = loaded_stages - 1;
+    if (stage != s_stage) { s_stage = stage; s_fidx = 0; s_fdir = 1; }
 }
 
 static void on_tick(lv_timer_t *)
@@ -186,11 +198,13 @@ static void on_anim(lv_timer_t *)
     if (!s_active) return;
     s_phase++;
 
-    if (s_nframes > 1) {
-        s_fidx += s_fdir;
-        if (s_fidx >= s_nframes - 1) { s_fidx = s_nframes - 1; s_fdir = -1; }
-        else if (s_fidx <= 0)        { s_fidx = 0;             s_fdir =  1; }
-        lv_image_set_src(s_fish, &s_dsc[s_fidx]);
+    if (s_nframes >= FISH_PER_STAGE) {
+        s_fidx += s_fdir;                             // cycle within the current life stage
+        if (s_fidx >= FISH_PER_STAGE - 1) { s_fidx = FISH_PER_STAGE - 1; s_fdir = -1; }
+        else if (s_fidx <= 0)             { s_fidx = 0;                  s_fdir =  1; }
+        int idx = s_stage * FISH_PER_STAGE + s_fidx;
+        if (idx >= s_nframes) idx = s_nframes - 1;
+        lv_image_set_src(s_fish, &s_dsc[idx]);
     }
 
     int dy = (int)(6.0f * sinf(s_phase * 0.16f));
