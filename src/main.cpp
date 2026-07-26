@@ -22,6 +22,7 @@
 #include "camera_screen.h"
 #include "deauther_screen.h"
 #include "waterfall_screen.h"
+#include "onboarding.h"
 #include "tpms_screen.h"
 #include "timezone.h"
 #include "tpms.h"
@@ -1605,6 +1606,7 @@ void setup()
     camera_screen_create();
     deauther_screen_create();
     waterfall_screen_create();
+    onboarding_screen_create();
     stopwatch_screen_create();
     timer_screen_create();
     alarm_screen_create();
@@ -1614,7 +1616,10 @@ void setup()
     lv_obj_add_event_cb(clock_screen, on_clock_gesture, LV_EVENT_GESTURE, NULL);
     // Hold the boot splash to a minimum ~1.5 s, then reveal the clock.
     while (millis() - boot_splash_ms < 1500) delay(10);
-    lv_scr_load(clock_screen);
+    // First boot after a flash: show the one-time authorized-use disclaimer
+    // instead of the clock; it advances to the clock once accepted.
+    if (onboarding_needed()) onboarding_screen_show();
+    else                     lv_scr_load(clock_screen);
     lv_obj_del(boot_splash);
     s_last_activity_ms = millis();
 
@@ -1701,6 +1706,7 @@ void loop()
     instance.loop(); // required for power button and PMU event dispatch
     motion_wake_poll();   // accel-driven wake; no-op when toggle is off
     timezone_bg_tick();   // apply background WiFi NTP/geolocation results
+    onboarding_bg_tick(); // send the one-time install ping once WiFi is available
     // Cheap on every iteration (an indev_state read + a millis() compare);
     // only crosses into the heavy capture+SD-write path on the 3 s edge.
     screenshot_poll();
