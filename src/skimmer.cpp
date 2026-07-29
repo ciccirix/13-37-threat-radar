@@ -14,9 +14,15 @@ void clock_screen_get_local_time(struct tm *out);
 // Names commonly seen on the HC-series Bluetooth modules card skimmers are
 // built from. Matched as a PREFIX — many clones append a version suffix
 // ("HC-05-V1.5", etc.) but the leading 5 chars are stable.
-static const char *HC_PREFIXES[] = { "HC-03", "HC-05", "HC-06" };
+// Names commonly seen on the BT/BLE serial modules card skimmers are built from.
+// Matched as a PREFIX with VARIABLE length (clones append a version suffix). Beyond
+// the classic HC-0x, the BLE serial modules (HM-10/AT-09/HC-08/JDY/MLT-BT05…) that a
+// BLE scan can actually see — many modern skimmers use these because they are cheaper.
+static const char *HC_PREFIXES[] = {
+    "HC-03", "HC-05", "HC-06", "HC-08", "HM-1", "HMSoft", "CC41",
+    "AT-09", "BT05", "BT-05", "MLT-BT05", "JDY-", "SPP-CA", "Linvor"
+};
 #define HC_PREFIX_COUNT  (int)(sizeof(HC_PREFIXES) / sizeof(HC_PREFIXES[0]))
-#define HC_PREFIX_LEN    5
 #define SKIMMER_NAME_MAX 33
 
 // Detection enqueued by the BT callback; drained by skimmer_bg_tick() on the
@@ -77,12 +83,12 @@ bool skimmer_check(const uint8_t *mac6, int8_t rssi, uint8_t addr_type,
         const uint8_t *ad_data     = adv + pos + 2;
         int            ad_data_len = (int)seg_len - 1;
 
-        if ((ad_type == 0x08 || ad_type == 0x09) &&
-            ad_data_len >= HC_PREFIX_LEN) {
+        if (ad_type == 0x08 || ad_type == 0x09) {
 
             bool matched = false;
             for (int i = 0; i < HC_PREFIX_COUNT; i++) {
-                if (memcmp(ad_data, HC_PREFIXES[i], HC_PREFIX_LEN) == 0) {
+                int pl = (int)strlen(HC_PREFIXES[i]);
+                if (ad_data_len >= pl && memcmp(ad_data, HC_PREFIXES[i], pl) == 0) {
                     matched = true;
                     break;
                 }
