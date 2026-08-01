@@ -223,7 +223,7 @@ static void on_write_btn(lv_event_t *e)
 static lv_obj_t *make_label(const char *text, int y)
 {
     lv_obj_t *lbl = lv_label_create(wr_screen);
-    lv_obj_set_style_text_color(lbl, lv_color_make(0xAA, 0xAA, 0xAA), LV_PART_MAIN);
+    lv_obj_set_style_text_color(lbl, lv_color_make(0x00, 0xAA, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(lbl, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_label_set_text(lbl, text);
     lv_obj_align(lbl, LV_ALIGN_TOP_MID, -150, y);
@@ -233,22 +233,22 @@ static lv_obj_t *make_label(const char *text, int y)
 static void style_dropdown(lv_obj_t *dd)
 {
     lv_obj_set_style_text_font(dd, &lv_font_montserrat_16, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(dd, lv_color_make(0x22, 0x22, 0x22), LV_PART_MAIN);
-    lv_obj_set_style_text_color(dd, lv_color_white(), LV_PART_MAIN);
-    lv_obj_set_style_border_color(dd, lv_color_make(0x55, 0x55, 0x55), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(dd, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(dd, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
+    lv_obj_set_style_border_color(dd, lv_color_make(0x00, 0x55, 0x00), LV_PART_MAIN);
     lv_obj_set_style_border_width(dd, 1, LV_PART_MAIN);
     lv_obj_t *list = lv_dropdown_get_list(dd);
-    lv_obj_set_style_bg_color(list, lv_color_make(0x22, 0x22, 0x22), LV_PART_MAIN);
-    lv_obj_set_style_text_color(list, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(list, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(list, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(list, &lv_font_montserrat_16, LV_PART_MAIN);
 }
 
 static void style_textarea(lv_obj_t *ta)
 {
     lv_obj_set_style_text_font(ta, &lv_font_montserrat_20, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(ta, lv_color_make(0x11, 0x11, 0x11), LV_PART_MAIN);
-    lv_obj_set_style_text_color(ta, lv_color_white(), LV_PART_MAIN);
-    lv_obj_set_style_border_color(ta, lv_color_make(0x44, 0x44, 0x44), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(ta, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(ta, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
+    lv_obj_set_style_border_color(ta, lv_color_make(0x00, 0x44, 0x00), LV_PART_MAIN);
     lv_obj_set_style_border_width(ta, 1, LV_PART_MAIN);
 }
 
@@ -259,7 +259,7 @@ void nfc_write_screen_create()
     lv_obj_set_style_border_width(wr_screen, 0, LV_PART_MAIN);
 
     lv_obj_t *title = lv_label_create(wr_screen);
-    lv_obj_set_style_text_color(title, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(title, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(title, &lv_font_montserrat_28, LV_PART_MAIN);
     lv_label_set_text(title, "NFC WRITE");
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 8);
@@ -317,6 +317,8 @@ void nfc_write_screen_create()
 
     write_btn_label = lv_label_create(write_btn);
     lv_obj_set_style_text_font(write_btn_label, &lv_font_montserrat_20, LV_PART_MAIN);
+    // White: this button's bg toggles green ("Write") / red ("Cancel"), so
+    // the label must stay readable against both, not just the theme green.
     lv_obj_set_style_text_color(write_btn_label, lv_color_white(), LV_PART_MAIN);
     lv_label_set_text(write_btn_label, "Write");
     lv_obj_center(write_btn_label);
@@ -324,7 +326,7 @@ void nfc_write_screen_create()
     // Status feedback
     status_label = lv_label_create(wr_screen);
     lv_obj_set_style_text_font(status_label, &lv_font_montserrat_16, LV_PART_MAIN);
-    lv_obj_set_style_text_color(status_label, lv_color_make(0xAA, 0xAA, 0xAA), LV_PART_MAIN);
+    lv_obj_set_style_text_color(status_label, lv_color_make(0x00, 0xAA, 0x00), LV_PART_MAIN);
     lv_obj_set_width(status_label, 390);
     lv_obj_set_style_text_align(status_label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     lv_label_set_text(status_label, "Boot button to return");

@@ -122,7 +122,7 @@ static void on_lap(lv_event_t *)
     snprintf(line, sizeof(line), "Lap %lu  %s", (unsigned long)s_lap_count, buf);
 
     lv_obj_t *entry = lv_label_create(lap_list);
-    lv_obj_set_style_text_color(entry, lv_color_make(0xCC, 0xCC, 0xCC), LV_PART_MAIN);
+    lv_obj_set_style_text_color(entry, lv_color_make(0x00, 0xCC, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(entry, &lv_font_montserrat_16, LV_PART_MAIN);
     lv_obj_set_style_pad_all(entry, 2, LV_PART_MAIN);
     lv_obj_set_width(entry, 360);
@@ -166,7 +166,7 @@ static lv_obj_t *make_btn(lv_obj_t *parent, const char *text, lv_coord_t x, lv_c
     lv_obj_set_size(btn, w, 48);
     lv_obj_set_pos(btn, x, y);
     lv_obj_set_style_radius(btn, 8, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(btn, lv_color_make(0x22, 0x22, 0x22), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(btn, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(btn, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_border_width(btn, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(btn, 0, LV_PART_MAIN);
@@ -175,7 +175,7 @@ static lv_obj_t *make_btn(lv_obj_t *parent, const char *text, lv_coord_t x, lv_c
 
     lv_obj_t *lbl = lv_label_create(btn);
     lv_label_set_text(lbl, text);
-    lv_obj_set_style_text_color(lbl, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(lbl, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(lbl, &lv_font_montserrat_24, LV_PART_MAIN);
     lv_obj_center(lbl);
 
@@ -192,21 +192,21 @@ void stopwatch_screen_create()
 
     // Title
     lv_obj_t *title = lv_label_create(stopwatch_screen);
-    lv_obj_set_style_text_color(title, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(title, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(title, &lv_font_montserrat_28, LV_PART_MAIN);
     lv_label_set_text(title, "STOPWATCH");
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 10);
 
     // Main elapsed time display (large)
     time_label = lv_label_create(stopwatch_screen);
-    lv_obj_set_style_text_color(time_label, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(time_label, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(time_label, &lv_font_montserrat_48, LV_PART_MAIN);
     lv_label_set_text(time_label, "0:00.00");
     lv_obj_align(time_label, LV_ALIGN_TOP_MID, 0, 60);
 
     // Lap time display (smaller, below main time)
     lap_label = lv_label_create(stopwatch_screen);
-    lv_obj_set_style_text_color(lap_label, lv_color_make(0x88, 0x88, 0x88), LV_PART_MAIN);
+    lv_obj_set_style_text_color(lap_label, lv_color_make(0x00, 0x88, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(lap_label, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_label_set_text(lap_label, "");
     lv_obj_align(lap_label, LV_ALIGN_TOP_MID, 0, 120);
@@ -222,6 +222,10 @@ void stopwatch_screen_create()
     start_btn = make_btn(stopwatch_screen, LV_SYMBOL_PLAY, 140, 150, 130);
     start_label = lv_obj_get_child(start_btn, 0);
     lv_obj_set_style_bg_color(start_btn, lv_color_make(0x00, 0xAA, 0x44), LV_PART_MAIN);
+    // White, overriding make_btn's default green label: this button's bg
+    // toggles between play-green and pause-red, so the glyph must stay
+    // readable against both.
+    lv_obj_set_style_text_color(start_label, lv_color_white(), LV_PART_MAIN);
     lv_obj_add_event_cb(start_btn, on_start_stop, LV_EVENT_CLICKED, NULL);
 
     // Reset button (right)
@@ -234,8 +238,8 @@ void stopwatch_screen_create()
     lap_list = lv_obj_create(stopwatch_screen);
     lv_obj_set_size(lap_list, 380, 220);
     lv_obj_align(lap_list, LV_ALIGN_TOP_MID, 0, 210);
-    lv_obj_set_style_bg_color(lap_list, lv_color_make(0x11, 0x11, 0x11), LV_PART_MAIN);
-    lv_obj_set_style_border_color(lap_list, lv_color_make(0x33, 0x33, 0x33), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(lap_list, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_border_color(lap_list, lv_color_make(0x00, 0x33, 0x00), LV_PART_MAIN);
     lv_obj_set_style_border_width(lap_list, 1, LV_PART_MAIN);
     lv_obj_set_style_radius(lap_list, 8, LV_PART_MAIN);
     lv_obj_set_style_pad_all(lap_list, 4, LV_PART_MAIN);
@@ -248,7 +252,7 @@ void stopwatch_screen_create()
 
     // "No laps" placeholder — floated out of the flex flow so we can centre it.
     lv_obj_t *placeholder = lv_label_create(lap_list);
-    lv_obj_set_style_text_color(placeholder, lv_color_make(0x55, 0x55, 0x55), LV_PART_MAIN);
+    lv_obj_set_style_text_color(placeholder, lv_color_make(0x00, 0x55, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(placeholder, &lv_font_montserrat_16, LV_PART_MAIN);
     lv_label_set_text(placeholder, "No laps recorded");
     lv_obj_add_flag(placeholder, LV_OBJ_FLAG_FLOATING);

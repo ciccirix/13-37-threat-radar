@@ -138,7 +138,7 @@ static void update_status()
     } else {
         snprintf(buf, sizeof(buf), "Tap START");
         lv_obj_set_style_text_color(status_label,
-            lv_color_make(0x88, 0x88, 0x88), LV_PART_MAIN);
+            lv_color_make(0x00, 0x88, 0x00), LV_PART_MAIN);
     }
     lv_label_set_text(status_label, buf);
 }
@@ -153,10 +153,10 @@ static void result_row_add(int idx)
     lv_obj_t *row = lv_obj_create(result_list);
     lv_obj_set_width(row, lv_pct(100));
     lv_obj_set_height(row, LV_SIZE_CONTENT);
-    lv_obj_set_style_bg_color(row, lv_color_make(0x16, 0x16, 0x16), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(row, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(row, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_border_side(row, LV_BORDER_SIDE_BOTTOM, LV_PART_MAIN);
-    lv_obj_set_style_border_color(row, lv_color_make(0x33, 0x33, 0x33), LV_PART_MAIN);
+    lv_obj_set_style_border_color(row, lv_color_make(0x00, 0x33, 0x00), LV_PART_MAIN);
     lv_obj_set_style_border_width(row, 1, LV_PART_MAIN);
     lv_obj_set_style_pad_hor(row, 8, LV_PART_MAIN);
     lv_obj_set_style_pad_ver(row, 4, LV_PART_MAIN);
@@ -183,7 +183,7 @@ static void result_row_add(int idx)
         lv_obj_t *b = lv_label_create(row);
         lv_obj_set_width(b, lv_pct(100));
         lv_obj_set_style_text_font(b, &lv_font_montserrat_14, LV_PART_MAIN);
-        lv_obj_set_style_text_color(b, lv_color_make(0xCC, 0xCC, 0xCC), LV_PART_MAIN);
+        lv_obj_set_style_text_color(b, lv_color_make(0x00, 0xCC, 0x00), LV_PART_MAIN);
         lv_label_set_long_mode(b, LV_LABEL_LONG_WRAP);
         lv_label_set_text(b, r->banner);
     }
@@ -327,7 +327,7 @@ static lv_obj_t *make_btn(lv_obj_t *parent, const char *text, int idx,
     lv_obj_set_size(btn, w, 38);
     lv_obj_set_pos(btn, x, y);
     lv_obj_set_style_radius(btn, 6, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(btn, lv_color_make(0x22, 0x22, 0x22), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(btn, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(btn, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_border_width(btn, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(btn, 0, LV_PART_MAIN);
@@ -336,7 +336,7 @@ static lv_obj_t *make_btn(lv_obj_t *parent, const char *text, int idx,
 
     lv_obj_t *l = lv_label_create(btn);
     lv_label_set_text(l, text);
-    lv_obj_set_style_text_color(l, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(l, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(l, &lv_font_montserrat_16, LV_PART_MAIN);
     lv_obj_center(l);
 
@@ -355,7 +355,7 @@ void portscan_screen_create()
     lv_obj_add_event_cb(portscan_screen, on_gesture, LV_EVENT_GESTURE, NULL);
 
     title_label = lv_label_create(portscan_screen);
-    lv_obj_set_style_text_color(title_label, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(title_label, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(title_label, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_label_set_text(title_label, "");
     lv_obj_align(title_label, LV_ALIGN_TOP_MID, 0, 10);
@@ -389,7 +389,7 @@ void portscan_screen_create()
     lv_obj_add_flag(range_row, LV_OBJ_FLAG_HIDDEN);
 
     lv_obj_t *lo_lbl = lv_label_create(range_row);
-    lv_obj_set_style_text_color(lo_lbl, lv_color_make(0xAA, 0xAA, 0xAA), LV_PART_MAIN);
+    lv_obj_set_style_text_color(lo_lbl, lv_color_make(0x00, 0xAA, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(lo_lbl, &lv_font_montserrat_16, LV_PART_MAIN);
     lv_label_set_text(lo_lbl, "Lo");
     lv_obj_align(lo_lbl, LV_ALIGN_LEFT_MID, 0, 0);
@@ -401,13 +401,13 @@ void portscan_screen_create()
     lv_textarea_set_text(range_lo_ta, "1");
     lv_obj_set_size(range_lo_ta, 100, 36);
     lv_obj_set_style_text_font(range_lo_ta, &lv_font_montserrat_16, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(range_lo_ta, lv_color_make(0x22, 0x22, 0x22), LV_PART_MAIN);
-    lv_obj_set_style_text_color(range_lo_ta, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(range_lo_ta, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(range_lo_ta, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_align(range_lo_ta, LV_ALIGN_LEFT_MID, 30, 0);
     lv_obj_add_event_cb(range_lo_ta, on_ta_event, LV_EVENT_ALL, NULL);
 
     lv_obj_t *hi_lbl = lv_label_create(range_row);
-    lv_obj_set_style_text_color(hi_lbl, lv_color_make(0xAA, 0xAA, 0xAA), LV_PART_MAIN);
+    lv_obj_set_style_text_color(hi_lbl, lv_color_make(0x00, 0xAA, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(hi_lbl, &lv_font_montserrat_16, LV_PART_MAIN);
     lv_label_set_text(hi_lbl, "Hi");
     lv_obj_align(hi_lbl, LV_ALIGN_LEFT_MID, 144, 0);
@@ -419,8 +419,8 @@ void portscan_screen_create()
     lv_textarea_set_text(range_hi_ta, "1024");
     lv_obj_set_size(range_hi_ta, 100, 36);
     lv_obj_set_style_text_font(range_hi_ta, &lv_font_montserrat_16, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(range_hi_ta, lv_color_make(0x22, 0x22, 0x22), LV_PART_MAIN);
-    lv_obj_set_style_text_color(range_hi_ta, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(range_hi_ta, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(range_hi_ta, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_align(range_hi_ta, LV_ALIGN_LEFT_MID, 176, 0);
     lv_obj_add_event_cb(range_hi_ta, on_ta_event, LV_EVENT_ALL, NULL);
 
@@ -439,6 +439,8 @@ void portscan_screen_create()
     lv_obj_add_event_cb(start_btn, on_start_btn, LV_EVENT_CLICKED, NULL);
 
     start_btn_label = lv_label_create(start_btn);
+    // White: this button's bg is a solid green fill, so green text would
+    // vanish on it.
     lv_obj_set_style_text_color(start_btn_label, lv_color_white(), LV_PART_MAIN);
     lv_obj_set_style_text_font(start_btn_label, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_label_set_text(start_btn_label, "START");
@@ -447,7 +449,7 @@ void portscan_screen_create()
     // Status line + scrollable result list fill the lower half.
     status_label = lv_label_create(portscan_screen);
     lv_obj_set_style_text_font(status_label, &lv_font_montserrat_14, LV_PART_MAIN);
-    lv_obj_set_style_text_color(status_label, lv_color_make(0x88, 0x88, 0x88), LV_PART_MAIN);
+    lv_obj_set_style_text_color(status_label, lv_color_make(0x00, 0x88, 0x00), LV_PART_MAIN);
     lv_label_set_text(status_label, "Tap START");
     lv_obj_align(status_label, LV_ALIGN_TOP_MID, 0, 248);
 

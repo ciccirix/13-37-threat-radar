@@ -450,7 +450,7 @@ static lv_obj_t *make_round_btn(const char *text, lv_align_t align,
     lv_obj_set_style_bg_color(b, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(b, LV_OPA_70, LV_PART_MAIN);
     lv_obj_set_style_border_width(b, 1, LV_PART_MAIN);
-    lv_obj_set_style_border_color(b, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_border_color(b, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_pad_all(b, 0, LV_PART_MAIN);
     lv_obj_clear_flag(b, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_add_flag(b, LV_OBJ_FLAG_CLICKABLE);
@@ -458,7 +458,7 @@ static lv_obj_t *make_round_btn(const char *text, lv_align_t align,
     lv_obj_add_event_cb(b, cb, LV_EVENT_CLICKED, NULL);
 
     lv_obj_t *l = lv_label_create(b);
-    lv_obj_set_style_text_color(l, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(l, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(l, &lv_font_montserrat_28, LV_PART_MAIN);
     lv_label_set_text(l, text);
     lv_obj_center(l);
@@ -487,7 +487,7 @@ void map_screen_create()
     lv_obj_set_style_radius(marker, LV_RADIUS_CIRCLE, LV_PART_MAIN);
     lv_obj_set_style_bg_color(marker, lv_color_make(0xFF, 0x33, 0x33), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(marker, LV_OPA_COVER, LV_PART_MAIN);
-    lv_obj_set_style_border_color(marker, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_border_color(marker, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_border_width(marker, 2, LV_PART_MAIN);
     lv_obj_set_style_pad_all(marker, 0, LV_PART_MAIN);
     lv_obj_clear_flag(marker, LV_OBJ_FLAG_SCROLLABLE);
@@ -501,16 +501,16 @@ void map_screen_create()
         node_dots[i] = lv_obj_create(map_screen);
         lv_obj_set_size(node_dots[i], 10, 10);
         lv_obj_set_style_radius(node_dots[i], LV_RADIUS_CIRCLE, LV_PART_MAIN);
-        lv_obj_set_style_bg_color(node_dots[i], lv_color_make(0x0A, 0x84, 0xFF), LV_PART_MAIN);
+        lv_obj_set_style_bg_color(node_dots[i], lv_color_black(), LV_PART_MAIN);
         lv_obj_set_style_bg_opa(node_dots[i], LV_OPA_COVER, LV_PART_MAIN);
-        lv_obj_set_style_border_color(node_dots[i], lv_color_white(), LV_PART_MAIN);
+        lv_obj_set_style_border_color(node_dots[i], lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
         lv_obj_set_style_border_width(node_dots[i], 1, LV_PART_MAIN);
         lv_obj_set_style_pad_all(node_dots[i], 0, LV_PART_MAIN);
         lv_obj_clear_flag(node_dots[i], LV_OBJ_FLAG_SCROLLABLE);
         lv_obj_add_flag(node_dots[i], LV_OBJ_FLAG_HIDDEN);
 
         node_labels[i] = lv_label_create(map_screen);
-        lv_obj_set_style_text_color(node_labels[i], lv_color_white(), LV_PART_MAIN);
+        lv_obj_set_style_text_color(node_labels[i], lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
         lv_obj_set_style_text_font(node_labels[i], &lv_font_montserrat_14, LV_PART_MAIN);
         lv_obj_set_style_bg_color(node_labels[i], lv_color_black(), LV_PART_MAIN);
         lv_obj_set_style_bg_opa(node_labels[i], LV_OPA_60, LV_PART_MAIN);
@@ -534,14 +534,14 @@ void map_screen_create()
     lv_obj_align(info_badge, LV_ALIGN_TOP_MID, 0, 8);
 
     info_label = lv_label_create(info_badge);
-    lv_obj_set_style_text_color(info_label, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(info_label, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(info_label, &lv_font_montserrat_14, LV_PART_MAIN);
     lv_label_set_text(info_label, "MAP");
     lv_obj_center(info_label);
 
     // Status overlay shown when there is no GPS fix.
     status_label = lv_label_create(map_screen);
-    lv_obj_set_style_text_color(status_label, lv_color_make(0xCC, 0xCC, 0xCC), LV_PART_MAIN);
+    lv_obj_set_style_text_color(status_label, lv_color_make(0x00, 0xCC, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(status_label, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_label_set_text(status_label, "No GPS fix\n(enable GPS to centre the map)");
     lv_obj_set_style_text_align(status_label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);

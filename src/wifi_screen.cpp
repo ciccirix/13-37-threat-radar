@@ -51,9 +51,9 @@ static lv_obj_t *make_card(bool clickable)
     lv_obj_t *card = lv_obj_create(list_box);
     lv_obj_set_width(card, lv_pct(100));
     lv_obj_set_height(card, LV_SIZE_CONTENT);
-    lv_obj_set_style_bg_color(card, lv_color_make(0x16, 0x16, 0x16), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(card, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(card, LV_OPA_COVER, LV_PART_MAIN);
-    lv_obj_set_style_border_color(card, lv_color_make(0x33, 0x33, 0x33), LV_PART_MAIN);
+    lv_obj_set_style_border_color(card, lv_color_make(0x00, 0x33, 0x00), LV_PART_MAIN);
     lv_obj_set_style_border_width(card, 1, LV_PART_MAIN);
     lv_obj_set_style_radius(card, 6, LV_PART_MAIN);
     lv_obj_set_style_pad_all(card, 8, LV_PART_MAIN);
@@ -77,7 +77,7 @@ static void placeholder(const char *txt)
 {
     lv_obj_t *l = lv_label_create(list_box);
     lv_obj_set_style_text_font(l, &lv_font_montserrat_16, LV_PART_MAIN);
-    lv_obj_set_style_text_color(l, lv_color_make(0x66, 0x66, 0x66), LV_PART_MAIN);
+    lv_obj_set_style_text_color(l, lv_color_make(0x00, 0x66, 0x00), LV_PART_MAIN);
     lv_label_set_text(l, txt);
     // float out of the flex flow so we can centre absolutely in the list box.
     lv_obj_add_flag(l, LV_OBJ_FLAG_FLOATING);
@@ -296,7 +296,7 @@ static void update_buttons()
         const char *l = (s_state == WST_SCANNING)   ? "SCANNING..." :
                         (s_state == WST_CONNECTING) ? "CONNECTING..." : "SCAN";
         lv_label_set_text(btn1_label, l);
-        lv_obj_set_style_bg_color(btn1, lv_color_make(0x00, 0x88, 0xCC), LV_PART_MAIN);
+        lv_obj_set_style_bg_color(btn1, lv_color_black(), LV_PART_MAIN);
         lv_obj_add_flag(btn2, LV_OBJ_FLAG_HIDDEN);
         lv_obj_align(btn1, LV_ALIGN_CENTER, 0, 0);
     }
@@ -471,6 +471,8 @@ static lv_obj_t *make_button(lv_obj_t *parent, lv_coord_t w, lv_coord_t h,
     lv_obj_clear_flag(b, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_add_flag(b, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_t *l = lv_label_create(b);
+    // White: this button's bg is a caller-supplied color, so the label
+    // stays readable regardless of which one gets passed in.
     lv_obj_set_style_text_color(l, lv_color_white(), LV_PART_MAIN);
     lv_obj_set_style_text_font(l, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_obj_center(l);
@@ -487,21 +489,21 @@ void wifi_screen_create()
 
     // Title — font_48 to match the PAGER / TPMS / SETTINGS / analyze headers.
     lv_obj_t *title = lv_label_create(wifi_screen);
-    lv_obj_set_style_text_color(title, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(title, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(title, &lv_font_montserrat_48, LV_PART_MAIN);
     lv_label_set_text(title, "WiFi");
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 10);
 
     status_label = lv_label_create(wifi_screen);
     lv_obj_set_style_text_font(status_label, &lv_font_montserrat_16, LV_PART_MAIN);
-    lv_obj_set_style_text_color(status_label, lv_color_make(0x88, 0x88, 0x88), LV_PART_MAIN);
+    lv_obj_set_style_text_color(status_label, lv_color_make(0x00, 0x88, 0x00), LV_PART_MAIN);
     lv_label_set_text(status_label, "Tap SCAN to survey nearby networks");
     lv_obj_align(status_label, LV_ALIGN_TOP_MID, 0, 56);
 
     // Password field (hidden until a secured network is chosen)
     pw_label = lv_label_create(wifi_screen);
     lv_obj_set_style_text_font(pw_label, &lv_font_montserrat_16, LV_PART_MAIN);
-    lv_obj_set_style_text_color(pw_label, lv_color_make(0xAA, 0xAA, 0xAA), LV_PART_MAIN);
+    lv_obj_set_style_text_color(pw_label, lv_color_make(0x00, 0xAA, 0x00), LV_PART_MAIN);
     lv_label_set_text(pw_label, "Password");
     lv_obj_align(pw_label, LV_ALIGN_TOP_MID, 0, 78);
     lv_obj_add_flag(pw_label, LV_OBJ_FLAG_HIDDEN);
@@ -513,9 +515,9 @@ void wifi_screen_create()
     lv_obj_set_size(pw_ta, 376, 44);
     lv_obj_align(pw_ta, LV_ALIGN_TOP_MID, 0, 100);
     lv_obj_set_style_text_font(pw_ta, &lv_font_montserrat_20, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(pw_ta, lv_color_make(0x11, 0x11, 0x11), LV_PART_MAIN);
-    lv_obj_set_style_text_color(pw_ta, lv_color_white(), LV_PART_MAIN);
-    lv_obj_set_style_border_color(pw_ta, lv_color_make(0x44, 0x44, 0x44), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(pw_ta, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(pw_ta, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
+    lv_obj_set_style_border_color(pw_ta, lv_color_make(0x00, 0x44, 0x00), LV_PART_MAIN);
     lv_obj_set_style_border_width(pw_ta, 1, LV_PART_MAIN);
     lv_obj_add_flag(pw_ta, LV_OBJ_FLAG_HIDDEN);
 
@@ -544,7 +546,7 @@ void wifi_screen_create()
     lv_obj_set_size(list_box, 404, 352);
     lv_obj_align(list_box, LV_ALIGN_TOP_MID, 0, 140);
     lv_obj_set_style_bg_color(list_box, lv_color_black(), LV_PART_MAIN);
-    lv_obj_set_style_border_color(list_box, lv_color_make(0x33, 0x33, 0x33), LV_PART_MAIN);
+    lv_obj_set_style_border_color(list_box, lv_color_make(0x00, 0x33, 0x00), LV_PART_MAIN);
     lv_obj_set_style_border_width(list_box, 1, LV_PART_MAIN);
     lv_obj_set_style_radius(list_box, 8, LV_PART_MAIN);
     lv_obj_set_style_pad_all(list_box, 6, LV_PART_MAIN);

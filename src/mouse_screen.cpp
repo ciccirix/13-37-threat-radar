@@ -47,7 +47,7 @@ static void update_status()
             lv_obj_set_style_text_color(status_label, lv_color_make(0xFF, 0xAA, 0x00), LV_PART_MAIN);
         } else {
             lv_label_set_text(status_label, "Stopped");
-            lv_obj_set_style_text_color(status_label, lv_color_make(0x88, 0x88, 0x88), LV_PART_MAIN);
+            lv_obj_set_style_text_color(status_label, lv_color_make(0x00, 0x88, 0x00), LV_PART_MAIN);
         }
     } else if (!mouse_hid_is_connected()) {
         lv_label_set_text(status_label, "Discoverable - pair \"T-Watch Mouse\"");
@@ -149,6 +149,8 @@ static lv_obj_t *make_button(lv_obj_t *parent, const char *text,
 
     lv_obj_t *lbl = lv_label_create(btn);
     lv_label_set_text(lbl, text);
+    // White: this button's bg is a caller-supplied color, so the label
+    // stays readable regardless of which one gets passed in.
     lv_obj_set_style_text_color(lbl, lv_color_white(), LV_PART_MAIN);
     lv_obj_set_style_text_font(lbl, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_obj_center(lbl);
@@ -166,7 +168,7 @@ void mouse_screen_create()
 
     // Title
     lv_obj_t *title = lv_label_create(mouse_screen);
-    lv_obj_set_style_text_color(title, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(title, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(title, &lv_font_montserrat_28, LV_PART_MAIN);
     lv_label_set_text(title, "MOUSE");
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 12);
@@ -174,7 +176,7 @@ void mouse_screen_create()
     // Status line
     status_label = lv_label_create(mouse_screen);
     lv_obj_set_style_text_font(status_label, &lv_font_montserrat_14, LV_PART_MAIN);
-    lv_obj_set_style_text_color(status_label, lv_color_make(0x88, 0x88, 0x88), LV_PART_MAIN);
+    lv_obj_set_style_text_color(status_label, lv_color_make(0x00, 0x88, 0x00), LV_PART_MAIN);
     lv_label_set_text(status_label, "Stopped");
     lv_obj_align(status_label, LV_ALIGN_TOP_MID, 0, 56);
 
@@ -189,9 +191,9 @@ void mouse_screen_create()
     trackpad = lv_obj_create(mouse_screen);
     lv_obj_set_size(trackpad, 390, 268);
     lv_obj_align(trackpad, LV_ALIGN_TOP_MID, 0, 142);
-    lv_obj_set_style_bg_color(trackpad, lv_color_make(0x14, 0x14, 0x14), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(trackpad, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(trackpad, LV_OPA_COVER, LV_PART_MAIN);
-    lv_obj_set_style_border_color(trackpad, lv_color_make(0x44, 0x44, 0x55), LV_PART_MAIN);
+    lv_obj_set_style_border_color(trackpad, lv_color_make(0x00, 0x55, 0x00), LV_PART_MAIN);
     lv_obj_set_style_border_width(trackpad, 2, LV_PART_MAIN);
     lv_obj_set_style_radius(trackpad, 10, LV_PART_MAIN);
     lv_obj_clear_flag(trackpad, LV_OBJ_FLAG_SCROLLABLE);
@@ -201,7 +203,7 @@ void mouse_screen_create()
     lv_obj_add_event_cb(trackpad, on_trackpad, LV_EVENT_RELEASED, NULL);
 
     hint_label = lv_label_create(trackpad);
-    lv_obj_set_style_text_color(hint_label, lv_color_make(0x55, 0x55, 0x55), LV_PART_MAIN);
+    lv_obj_set_style_text_color(hint_label, lv_color_make(0x00, 0x55, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(hint_label, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_label_set_text(hint_label, "(not connected)");
     lv_obj_center(hint_label);

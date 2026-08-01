@@ -165,7 +165,7 @@ static void update_status()
         return;
     }
     lv_label_set_text(status_label, "Off");
-    lv_obj_set_style_text_color(status_label, lv_color_make(0x66, 0x66, 0x66), LV_PART_MAIN);
+    lv_obj_set_style_text_color(status_label, lv_color_make(0x00, 0x66, 0x00), LV_PART_MAIN);
 }
 
 static void rebuild_msg_list()
@@ -175,7 +175,7 @@ static void rebuild_msg_list()
     if (n == 0) {
         lv_obj_t *lbl = lv_label_create(msg_list);
         lv_obj_add_flag(lbl, LV_OBJ_FLAG_FLOATING);
-        lv_obj_set_style_text_color(lbl, lv_color_make(0x44, 0x44, 0x44), LV_PART_MAIN);
+        lv_obj_set_style_text_color(lbl, lv_color_make(0x00, 0x44, 0x00), LV_PART_MAIN);
         lv_obj_set_style_text_font(lbl, &lv_font_montserrat_16, LV_PART_MAIN);
         lv_label_set_text(lbl, "No messages yet.");
         lv_obj_center(lbl);
@@ -191,7 +191,7 @@ static void rebuild_msg_list()
         lv_obj_set_style_bg_color(entry, lv_color_black(), LV_PART_MAIN);
         lv_obj_set_style_bg_opa(entry, LV_OPA_COVER, LV_PART_MAIN);
         lv_obj_set_style_border_side(entry, LV_BORDER_SIDE_BOTTOM, LV_PART_MAIN);
-        lv_obj_set_style_border_color(entry, lv_color_make(0x33, 0x33, 0x33), LV_PART_MAIN);
+        lv_obj_set_style_border_color(entry, lv_color_make(0x00, 0x33, 0x00), LV_PART_MAIN);
         lv_obj_set_style_border_width(entry, 1, LV_PART_MAIN);
         lv_obj_set_style_pad_hor(entry, 8, LV_PART_MAIN);
         lv_obj_set_style_pad_ver(entry, 6, LV_PART_MAIN);
@@ -225,7 +225,7 @@ static void rebuild_msg_list()
         if (m->text[0] != '\0') {
             lv_obj_t *t = lv_label_create(entry);
             lv_obj_set_width(t, lv_pct(100));
-            lv_obj_set_style_text_color(t, lv_color_white(), LV_PART_MAIN);
+            lv_obj_set_style_text_color(t, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
             lv_obj_set_style_text_font(t, &lv_font_montserrat_16, LV_PART_MAIN);
             lv_label_set_text(t, m->text);
             lv_label_set_long_mode(t, LV_LABEL_LONG_WRAP);
@@ -530,7 +530,7 @@ static lv_obj_t *make_mode_btn(lv_obj_t *parent, const char *text, int idx,
     lv_obj_set_size(btn, 76, 44);
     lv_obj_set_pos(btn, x, y);
     lv_obj_set_style_radius(btn, 6, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(btn, lv_color_make(0x22, 0x22, 0x22), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(btn, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(btn, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_border_width(btn, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(btn, 0, LV_PART_MAIN);
@@ -539,7 +539,7 @@ static lv_obj_t *make_mode_btn(lv_obj_t *parent, const char *text, int idx,
 
     lv_obj_t *lbl = lv_label_create(btn);
     lv_label_set_text(lbl, text);
-    lv_obj_set_style_text_color(lbl, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(lbl, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(lbl, &lv_font_montserrat_16, LV_PART_MAIN);
     lv_obj_center(lbl);
 
@@ -559,7 +559,7 @@ void pager_screen_create()
     // below sits at y=70 which leaves a 14 px gap clear of the bigger
     // title (font_48 extends to ~y=56 from the y=8 origin).
     lv_obj_t *title = lv_label_create(pager_screen);
-    lv_obj_set_style_text_color(title, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(title, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(title, &lv_font_montserrat_48, LV_PART_MAIN);
     lv_label_set_text(title, "PAGER");
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 8);
@@ -576,9 +576,9 @@ void pager_screen_create()
     lv_obj_set_size(freq_dropdown, 150, 44);
     lv_obj_align(freq_dropdown, LV_ALIGN_TOP_MID, -69, 70);
     lv_obj_set_style_text_font(freq_dropdown, &lv_font_montserrat_16, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(freq_dropdown, lv_color_make(0x22, 0x22, 0x22), LV_PART_MAIN);
-    lv_obj_set_style_text_color(freq_dropdown, lv_color_white(), LV_PART_MAIN);
-    lv_obj_set_style_border_color(freq_dropdown, lv_color_make(0x44, 0x44, 0x44), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(freq_dropdown, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(freq_dropdown, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
+    lv_obj_set_style_border_color(freq_dropdown, lv_color_make(0x00, 0x44, 0x00), LV_PART_MAIN);
     lv_obj_add_event_cb(freq_dropdown, on_freq_changed, LV_EVENT_VALUE_CHANGED, NULL);
 
     // Custom frequency text area — always visible so the user can see the
@@ -593,8 +593,8 @@ void pager_screen_create()
     lv_obj_set_size(rx_freq_ta, 130, 44);
     lv_obj_align(rx_freq_ta, LV_ALIGN_TOP_MID, 79, 70);
     lv_obj_set_style_text_font(rx_freq_ta, &lv_font_montserrat_16, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(rx_freq_ta, lv_color_make(0x22, 0x22, 0x22), LV_PART_MAIN);
-    lv_obj_set_style_text_color(rx_freq_ta, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(rx_freq_ta, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(rx_freq_ta, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_scroll_dir(rx_freq_ta, LV_DIR_HOR);
     lv_obj_add_event_cb(rx_freq_ta, on_rx_freq_ta_event, LV_EVENT_ALL, NULL);
 
@@ -603,13 +603,13 @@ void pager_screen_create()
     scan_switch = lv_switch_create(pager_screen);
     lv_obj_set_size(scan_switch, 60, 32);
     lv_obj_align(scan_switch, LV_ALIGN_TOP_MID, -90, 120);
-    lv_obj_set_style_bg_color(scan_switch, lv_color_make(0x44, 0x44, 0x44), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(scan_switch, lv_color_make(0x00, 0x44, 0x00), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(scan_switch, lv_color_make(0x00, 0xCC, 0x66), LV_PART_MAIN | LV_STATE_CHECKED);
     lv_obj_add_event_cb(scan_switch, on_scan_toggled, LV_EVENT_VALUE_CHANGED, NULL);
 
     status_label = lv_label_create(pager_screen);
     lv_obj_set_style_text_font(status_label, &lv_font_montserrat_14, LV_PART_MAIN);
-    lv_obj_set_style_text_color(status_label, lv_color_make(0x66, 0x66, 0x66), LV_PART_MAIN);
+    lv_obj_set_style_text_color(status_label, lv_color_make(0x00, 0x66, 0x00), LV_PART_MAIN);
     lv_label_set_text(status_label, "Off");
     lv_obj_align(status_label, LV_ALIGN_TOP_MID, 50, 128);
 
@@ -710,9 +710,9 @@ void pager_screen_create()
     // centred the panel still has the bottom half of the screen free for
     // the keyboard to occupy without overlapping the input fields.
     lv_obj_align(tx_panel, LV_ALIGN_CENTER, 0, 0);
-    lv_obj_set_style_bg_color(tx_panel, lv_color_make(0x18, 0x18, 0x18), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(tx_panel, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(tx_panel, LV_OPA_COVER, LV_PART_MAIN);
-    lv_obj_set_style_border_color(tx_panel, lv_color_make(0x55, 0x55, 0x55), LV_PART_MAIN);
+    lv_obj_set_style_border_color(tx_panel, lv_color_make(0x00, 0x55, 0x00), LV_PART_MAIN);
     lv_obj_set_style_border_width(tx_panel, 1, LV_PART_MAIN);
     lv_obj_set_style_radius(tx_panel, 8, LV_PART_MAIN);
     lv_obj_set_style_pad_all(tx_panel, 12, LV_PART_MAIN);
@@ -720,7 +720,7 @@ void pager_screen_create()
 
     // Panel title
     lv_obj_t *tx_title = lv_label_create(tx_panel);
-    lv_obj_set_style_text_color(tx_title, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(tx_title, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(tx_title, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_label_set_text(tx_title, "TRANSMIT");
     lv_obj_align(tx_title, LV_ALIGN_TOP_LEFT, 0, 0);
@@ -729,7 +729,7 @@ void pager_screen_create()
     // Updated in pager_screen_show() so it stays in sync with the mode
     // buttons on the underlying screen.
     lv_obj_t *tx_mode_hint = lv_label_create(tx_panel);
-    lv_obj_set_style_text_color(tx_mode_hint, lv_color_make(0xAA, 0xAA, 0xAA), LV_PART_MAIN);
+    lv_obj_set_style_text_color(tx_mode_hint, lv_color_make(0x00, 0xAA, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(tx_mode_hint, &lv_font_montserrat_14, LV_PART_MAIN);
     lv_label_set_text(tx_mode_hint, "");
     lv_obj_align(tx_mode_hint, LV_ALIGN_TOP_RIGHT, 0, 4);
@@ -746,7 +746,7 @@ void pager_screen_create()
     // the user to edit; typing into the text area effectively means
     // "Custom..." regardless of what the dropdown last showed.
     lv_obj_t *freq_lbl = lv_label_create(tx_panel);
-    lv_obj_set_style_text_color(freq_lbl, lv_color_make(0xAA, 0xAA, 0xAA), LV_PART_MAIN);
+    lv_obj_set_style_text_color(freq_lbl, lv_color_make(0x00, 0xAA, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(freq_lbl, &lv_font_montserrat_14, LV_PART_MAIN);
     lv_label_set_text(freq_lbl, "Frequency (MHz)");
     lv_obj_align(freq_lbl, LV_ALIGN_TOP_LEFT, 0, 36);
@@ -756,9 +756,9 @@ void pager_screen_create()
     lv_obj_set_size(tx_freq_dropdown, 200, 44);
     lv_obj_align(tx_freq_dropdown, LV_ALIGN_TOP_LEFT, 0, 58);
     lv_obj_set_style_text_font(tx_freq_dropdown, &lv_font_montserrat_16, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(tx_freq_dropdown, lv_color_make(0x22, 0x22, 0x22), LV_PART_MAIN);
-    lv_obj_set_style_text_color(tx_freq_dropdown, lv_color_white(), LV_PART_MAIN);
-    lv_obj_set_style_border_color(tx_freq_dropdown, lv_color_make(0x44, 0x44, 0x44), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(tx_freq_dropdown, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(tx_freq_dropdown, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
+    lv_obj_set_style_border_color(tx_freq_dropdown, lv_color_make(0x00, 0x44, 0x00), LV_PART_MAIN);
     lv_obj_add_event_cb(tx_freq_dropdown, on_tx_freq_dropdown_changed,
                         LV_EVENT_VALUE_CHANGED, NULL);
 
@@ -773,14 +773,14 @@ void pager_screen_create()
     lv_obj_set_size(tx_freq_ta, 130, 44);
     lv_obj_align(tx_freq_ta, LV_ALIGN_TOP_RIGHT, 0, 58);
     lv_obj_set_style_text_font(tx_freq_ta, &lv_font_montserrat_16, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(tx_freq_ta, lv_color_make(0x22, 0x22, 0x22), LV_PART_MAIN);
-    lv_obj_set_style_text_color(tx_freq_ta, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(tx_freq_ta, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(tx_freq_ta, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_scroll_dir(tx_freq_ta, LV_DIR_HOR);
     lv_obj_add_event_cb(tx_freq_ta, on_tx_ta_event, LV_EVENT_ALL, NULL);
 
     // Capcode field — shifted down 70 px to clear the new frequency row.
     lv_obj_t *cap_lbl = lv_label_create(tx_panel);
-    lv_obj_set_style_text_color(cap_lbl, lv_color_make(0xAA, 0xAA, 0xAA), LV_PART_MAIN);
+    lv_obj_set_style_text_color(cap_lbl, lv_color_make(0x00, 0xAA, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(cap_lbl, &lv_font_montserrat_14, LV_PART_MAIN);
     lv_label_set_text(cap_lbl, "Capcode");
     lv_obj_align(cap_lbl, LV_ALIGN_TOP_LEFT, 0, 106);
@@ -796,8 +796,8 @@ void pager_screen_create()
     // blink. 44 leaves enough headroom for the cursor not to cause that.
     lv_obj_set_size(tx_capcode_ta, 200, 44);
     lv_obj_set_style_text_font(tx_capcode_ta, &lv_font_montserrat_16, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(tx_capcode_ta, lv_color_make(0x22, 0x22, 0x22), LV_PART_MAIN);
-    lv_obj_set_style_text_color(tx_capcode_ta, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(tx_capcode_ta, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(tx_capcode_ta, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     // Horizontal-only scroll — for a one-line numeric field there's never
     // anything to scroll vertically, and disabling that axis kills the
     // residual jitter even if the height ever ends up borderline.
@@ -807,7 +807,7 @@ void pager_screen_create()
 
     // Message field — shifted down with the rest.
     lv_obj_t *msg_lbl = lv_label_create(tx_panel);
-    lv_obj_set_style_text_color(msg_lbl, lv_color_make(0xAA, 0xAA, 0xAA), LV_PART_MAIN);
+    lv_obj_set_style_text_color(msg_lbl, lv_color_make(0x00, 0xAA, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(msg_lbl, &lv_font_montserrat_14, LV_PART_MAIN);
     lv_label_set_text(msg_lbl, "Message");
     lv_obj_align(msg_lbl, LV_ALIGN_TOP_LEFT, 0, 172);
@@ -824,8 +824,8 @@ void pager_screen_create()
     lv_obj_set_size(tx_msg_ta, 356, 44);
     lv_obj_set_scroll_dir(tx_msg_ta, LV_DIR_HOR);
     lv_obj_set_style_text_font(tx_msg_ta, &lv_font_montserrat_16, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(tx_msg_ta, lv_color_make(0x22, 0x22, 0x22), LV_PART_MAIN);
-    lv_obj_set_style_text_color(tx_msg_ta, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(tx_msg_ta, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(tx_msg_ta, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_align(tx_msg_ta, LV_ALIGN_TOP_LEFT, 0, 194);
     lv_obj_add_event_cb(tx_msg_ta, on_tx_ta_event, LV_EVENT_ALL, NULL);
 
@@ -842,6 +842,8 @@ void pager_screen_create()
     lv_obj_add_event_cb(send_btn, on_tx_send, LV_EVENT_CLICKED, NULL);
     lv_obj_t *send_lbl = lv_label_create(send_btn);
     lv_label_set_text(send_lbl, "SEND");
+    // White: this button's bg is a solid green fill, so green text would
+    // vanish on it.
     lv_obj_set_style_text_color(send_lbl, lv_color_white(), LV_PART_MAIN);
     lv_obj_set_style_text_font(send_lbl, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_obj_center(send_lbl);
@@ -849,7 +851,7 @@ void pager_screen_create()
     lv_obj_t *close_btn = lv_obj_create(tx_panel);
     lv_obj_set_size(close_btn, 120, 44);
     lv_obj_align(close_btn, LV_ALIGN_TOP_RIGHT, 0, 248);
-    lv_obj_set_style_bg_color(close_btn, lv_color_make(0x44, 0x44, 0x44), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(close_btn, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_radius(close_btn, 6, LV_PART_MAIN);
     lv_obj_set_style_border_width(close_btn, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(close_btn, 0, LV_PART_MAIN);
@@ -858,7 +860,7 @@ void pager_screen_create()
     lv_obj_add_event_cb(close_btn, on_tx_close, LV_EVENT_CLICKED, NULL);
     lv_obj_t *close_lbl = lv_label_create(close_btn);
     lv_label_set_text(close_lbl, "CLOSE");
-    lv_obj_set_style_text_color(close_lbl, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(close_lbl, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(close_lbl, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_obj_center(close_lbl);
 

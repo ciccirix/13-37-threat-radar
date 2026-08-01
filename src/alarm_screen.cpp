@@ -58,6 +58,9 @@ static lv_obj_t *make_button(lv_obj_t *parent, const char *text,
 
     lv_obj_t *l = lv_label_create(btn);
     lv_label_set_text(l, text);
+    // White, not themed green: this button's bg is a caller-supplied color
+    // (can be any status/accent hue), so the label needs to stay readable
+    // against whatever that turns out to be.
     lv_obj_set_style_text_color(l, lv_color_white(), LV_PART_MAIN);
     lv_obj_set_style_text_font(l, font ? font : &lv_font_montserrat_20, LV_PART_MAIN);
     lv_obj_center(l);
@@ -319,28 +322,28 @@ static void create_settings_screen()
 
 
     lv_obj_t *title = lv_label_create(settings_scr);
-    lv_obj_set_style_text_color(title, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(title, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(title, &lv_font_montserrat_28, LV_PART_MAIN);
     lv_label_set_text(title, "ALARM");
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 10);
 
     // Live "Now ..." display so the user can compare against the alarm time.
     current_time_label = lv_label_create(settings_scr);
-    lv_obj_set_style_text_color(current_time_label, lv_color_make(0xCC, 0xCC, 0xCC), LV_PART_MAIN);
+    lv_obj_set_style_text_color(current_time_label, lv_color_make(0x00, 0xCC, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(current_time_label, &lv_font_montserrat_28, LV_PART_MAIN);
     lv_label_set_text(current_time_label, "Now --:--");
     lv_obj_align(current_time_label, LV_ALIGN_TOP_MID, 0, 58);
 
     // Enable toggle row
     lv_obj_t *enable_lbl = lv_label_create(settings_scr);
-    lv_obj_set_style_text_color(enable_lbl, lv_color_make(0xAA, 0xAA, 0xAA), LV_PART_MAIN);
+    lv_obj_set_style_text_color(enable_lbl, lv_color_make(0x00, 0xAA, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(enable_lbl, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_label_set_text(enable_lbl, "Enabled");
     lv_obj_align(enable_lbl, LV_ALIGN_TOP_LEFT, 30, 120);
 
     enable_switch = lv_switch_create(settings_scr);
     lv_obj_set_size(enable_switch, 80, 40);
-    lv_obj_set_style_bg_color(enable_switch, lv_color_make(0x44, 0x44, 0x44), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(enable_switch, lv_color_make(0x00, 0x44, 0x00), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(enable_switch, lv_color_make(0x00, 0xCC, 0x66), LV_PART_MAIN | LV_STATE_CHECKED);
     lv_obj_align(enable_switch, LV_ALIGN_TOP_RIGHT, -30, 115);
     lv_obj_add_event_cb(enable_switch, on_enable_changed, LV_EVENT_VALUE_CHANGED, NULL);
@@ -349,12 +352,12 @@ static void create_settings_screen()
     // because the hour range depends on the watch's 12h / 24h mode.
     auto style_roller = [](lv_obj_t *r) {
         lv_obj_set_style_text_font(r, &lv_font_montserrat_28, LV_PART_MAIN);
-        lv_obj_set_style_bg_color(r, lv_color_make(0x22, 0x22, 0x22), LV_PART_MAIN);
-        lv_obj_set_style_text_color(r, lv_color_white(), LV_PART_MAIN);
-        lv_obj_set_style_border_color(r, lv_color_make(0x55, 0x55, 0x55), LV_PART_MAIN);
+        lv_obj_set_style_bg_color(r, lv_color_black(), LV_PART_MAIN);
+        lv_obj_set_style_text_color(r, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
+        lv_obj_set_style_border_color(r, lv_color_make(0x00, 0x55, 0x00), LV_PART_MAIN);
         lv_obj_set_style_border_width(r, 1, LV_PART_MAIN);
         lv_obj_set_style_bg_color(r, lv_color_make(0x00, 0x55, 0x33), LV_PART_SELECTED);
-        lv_obj_set_style_text_color(r, lv_color_white(), LV_PART_SELECTED);
+        lv_obj_set_style_text_color(r, lv_color_make(0x00, 0xFF, 0x00), LV_PART_SELECTED);
     };
 
     hour_roller = lv_roller_create(settings_scr);
@@ -366,7 +369,7 @@ static void create_settings_screen()
 
     // Big colon between rollers
     colon_label = lv_label_create(settings_scr);
-    lv_obj_set_style_text_color(colon_label, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(colon_label, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(colon_label, &lv_font_montserrat_48, LV_PART_MAIN);
     lv_label_set_text(colon_label, ":");
     lv_obj_align(colon_label, LV_ALIGN_TOP_MID, 0, 220);
@@ -410,35 +413,35 @@ static void create_settings_screen()
     // Section header so the visual separation between time-picker and
     // alert-behaviour controls is obvious when scrolled to.
     lv_obj_t *section_hdr = lv_label_create(settings_scr);
-    lv_obj_set_style_text_color(section_hdr, lv_color_make(0x88, 0x88, 0x88), LV_PART_MAIN);
+    lv_obj_set_style_text_color(section_hdr, lv_color_make(0x00, 0x88, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(section_hdr, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_label_set_text(section_hdr, "ALERT");
     lv_obj_align(section_hdr, LV_ALIGN_TOP_MID, 0, 362);
 
     // Vibration toggle
     lv_obj_t *vib_lbl = lv_label_create(settings_scr);
-    lv_obj_set_style_text_color(vib_lbl, lv_color_make(0xAA, 0xAA, 0xAA), LV_PART_MAIN);
+    lv_obj_set_style_text_color(vib_lbl, lv_color_make(0x00, 0xAA, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(vib_lbl, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_label_set_text(vib_lbl, "Vibration");
     lv_obj_align(vib_lbl, LV_ALIGN_TOP_LEFT, 30, 408);
 
     vibrate_switch = lv_switch_create(settings_scr);
     lv_obj_set_size(vibrate_switch, 80, 40);
-    lv_obj_set_style_bg_color(vibrate_switch, lv_color_make(0x44, 0x44, 0x44), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(vibrate_switch, lv_color_make(0x00, 0x44, 0x00), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(vibrate_switch, lv_color_make(0x00, 0xCC, 0x66), LV_PART_MAIN | LV_STATE_CHECKED);
     lv_obj_align(vibrate_switch, LV_ALIGN_TOP_RIGHT, -30, 403);
     lv_obj_add_event_cb(vibrate_switch, on_vibrate_changed, LV_EVENT_VALUE_CHANGED, NULL);
 
     // Audio toggle
     lv_obj_t *aud_lbl = lv_label_create(settings_scr);
-    lv_obj_set_style_text_color(aud_lbl, lv_color_make(0xAA, 0xAA, 0xAA), LV_PART_MAIN);
+    lv_obj_set_style_text_color(aud_lbl, lv_color_make(0x00, 0xAA, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(aud_lbl, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_label_set_text(aud_lbl, "Audio");
     lv_obj_align(aud_lbl, LV_ALIGN_TOP_LEFT, 30, 462);
 
     audio_switch = lv_switch_create(settings_scr);
     lv_obj_set_size(audio_switch, 80, 40);
-    lv_obj_set_style_bg_color(audio_switch, lv_color_make(0x44, 0x44, 0x44), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(audio_switch, lv_color_make(0x00, 0x44, 0x00), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(audio_switch, lv_color_make(0x00, 0xCC, 0x66), LV_PART_MAIN | LV_STATE_CHECKED);
     lv_obj_align(audio_switch, LV_ALIGN_TOP_RIGHT, -30, 457);
     lv_obj_add_event_cb(audio_switch, on_audio_changed, LV_EVENT_VALUE_CHANGED, NULL);
@@ -446,7 +449,7 @@ static void create_settings_screen()
     // Volume slider — label on the left shows "Volume  NN%", drag bar below.
     // Both are hidden when the Audio toggle is off (see apply_audio_visibility).
     volume_label = lv_label_create(settings_scr);
-    lv_obj_set_style_text_color(volume_label, lv_color_make(0xAA, 0xAA, 0xAA), LV_PART_MAIN);
+    lv_obj_set_style_text_color(volume_label, lv_color_make(0x00, 0xAA, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(volume_label, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_label_set_text(volume_label, "Volume  100%");
     lv_obj_align(volume_label, LV_ALIGN_TOP_LEFT, 30, 515);
@@ -455,12 +458,12 @@ static void create_settings_screen()
     lv_obj_set_size(volume_slider, 320, 30);
     lv_slider_set_range(volume_slider, 0, 100);
     lv_slider_set_value(volume_slider, 100, LV_ANIM_OFF);
-    lv_obj_set_style_bg_color(volume_slider, lv_color_make(0x44, 0x44, 0x44), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(volume_slider, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_radius(volume_slider, 8, LV_PART_MAIN);
     lv_obj_set_style_border_width(volume_slider, 0, LV_PART_MAIN);
     lv_obj_set_style_bg_color(volume_slider, lv_color_make(0x00, 0xCC, 0x66), LV_PART_INDICATOR);
     lv_obj_set_style_radius(volume_slider, 8, LV_PART_INDICATOR);
-    lv_obj_set_style_bg_color(volume_slider, lv_color_white(), LV_PART_KNOB);
+    lv_obj_set_style_bg_color(volume_slider, lv_color_make(0x00, 0xFF, 0x00), LV_PART_KNOB);
     lv_obj_set_style_radius(volume_slider, LV_RADIUS_CIRCLE, LV_PART_KNOB);
     lv_obj_set_style_pad_all(volume_slider, 10, LV_PART_KNOB);
     lv_obj_set_style_border_width(volume_slider, 0, LV_PART_KNOB);
@@ -469,7 +472,7 @@ static void create_settings_screen()
 
     // Snooze duration dropdown
     lv_obj_t *snz_lbl = lv_label_create(settings_scr);
-    lv_obj_set_style_text_color(snz_lbl, lv_color_make(0xAA, 0xAA, 0xAA), LV_PART_MAIN);
+    lv_obj_set_style_text_color(snz_lbl, lv_color_make(0x00, 0xAA, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(snz_lbl, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_label_set_text(snz_lbl, "Snooze time");
     lv_obj_align(snz_lbl, LV_ALIGN_TOP_LEFT, 30, 610);
@@ -479,24 +482,24 @@ static void create_settings_screen()
     lv_dropdown_set_selected(snooze_dropdown, 0);
     lv_obj_set_size(snooze_dropdown, 160, 40);
     lv_obj_set_style_text_font(snooze_dropdown, &lv_font_montserrat_20, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(snooze_dropdown, lv_color_make(0x22, 0x22, 0x22), LV_PART_MAIN);
-    lv_obj_set_style_text_color(snooze_dropdown, lv_color_white(), LV_PART_MAIN);
-    lv_obj_set_style_border_color(snooze_dropdown, lv_color_make(0x55, 0x55, 0x55), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(snooze_dropdown, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(snooze_dropdown, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
+    lv_obj_set_style_border_color(snooze_dropdown, lv_color_make(0x00, 0x55, 0x00), LV_PART_MAIN);
     lv_obj_set_style_border_width(snooze_dropdown, 1, LV_PART_MAIN);
     lv_obj_align(snooze_dropdown, LV_ALIGN_TOP_RIGHT, -30, 605);
     // Match the popup list styling to the closed dropdown so the dark-mode
     // theme stays consistent when the user taps it open.
     lv_obj_t *dd_list = lv_dropdown_get_list(snooze_dropdown);
-    lv_obj_set_style_bg_color(dd_list, lv_color_make(0x22, 0x22, 0x22), LV_PART_MAIN);
-    lv_obj_set_style_text_color(dd_list, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(dd_list, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(dd_list, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(dd_list, &lv_font_montserrat_20, LV_PART_MAIN);
-    lv_obj_set_style_border_color(dd_list, lv_color_make(0x55, 0x55, 0x55), LV_PART_MAIN);
+    lv_obj_set_style_border_color(dd_list, lv_color_make(0x00, 0x55, 0x00), LV_PART_MAIN);
     lv_obj_add_event_cb(snooze_dropdown, on_snooze_changed, LV_EVENT_VALUE_CHANGED, NULL);
 
     // Bottom hint — lives below the snooze row so it doubles as a visual end
     // marker for the scrollable content.
     lv_obj_t *hint = lv_label_create(settings_scr);
-    lv_obj_set_style_text_color(hint, lv_color_make(0x77, 0x77, 0x77), LV_PART_MAIN);
+    lv_obj_set_style_text_color(hint, lv_color_make(0x00, 0x77, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(hint, &lv_font_montserrat_16, LV_PART_MAIN);
     lv_label_set_text(hint, "rings once a day at the chosen time");
     lv_obj_align(hint, LV_ALIGN_TOP_MID, 0, 670);
@@ -512,13 +515,13 @@ static void create_ringing_screen()
     lv_obj_set_style_pad_all(ring_scr, 0, LV_PART_MAIN);
 
     lv_obj_t *title = lv_label_create(ring_scr);
-    lv_obj_set_style_text_color(title, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(title, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(title, &lv_font_montserrat_48, LV_PART_MAIN);
     lv_label_set_text(title, "ALARM");
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 60);
 
     ring_time_label = lv_label_create(ring_scr);
-    lv_obj_set_style_text_color(ring_time_label, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(ring_time_label, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(ring_time_label, &lv_font_montserrat_48, LV_PART_MAIN);
     lv_label_set_text(ring_time_label, "00:00");
     lv_obj_align(ring_time_label, LV_ALIGN_CENTER, 0, -20);

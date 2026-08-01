@@ -38,20 +38,20 @@ static void make_data_row(lv_obj_t *parent, const char *field, lv_obj_t **val_ou
     lv_obj_set_style_bg_opa(row, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_radius(row, 0, LV_PART_MAIN);
     lv_obj_set_style_border_side(row, LV_BORDER_SIDE_BOTTOM, LV_PART_MAIN);
-    lv_obj_set_style_border_color(row, lv_color_make(0x33, 0x33, 0x33), LV_PART_MAIN);
+    lv_obj_set_style_border_color(row, lv_color_make(0x00, 0x33, 0x00), LV_PART_MAIN);
     lv_obj_set_style_border_width(row, 1, LV_PART_MAIN);
     lv_obj_set_style_pad_hor(row, 8, LV_PART_MAIN);
     lv_obj_set_style_pad_ver(row, 0, LV_PART_MAIN);
     lv_obj_clear_flag(row, LV_OBJ_FLAG_SCROLLABLE);
 
     lv_obj_t *lbl = lv_label_create(row);
-    lv_obj_set_style_text_color(lbl, lv_color_make(0xAA, 0xAA, 0xAA), LV_PART_MAIN);
+    lv_obj_set_style_text_color(lbl, lv_color_make(0x00, 0xAA, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(lbl, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_label_set_text(lbl, field);
     lv_obj_align(lbl, LV_ALIGN_LEFT_MID, 0, 0);
 
     lv_obj_t *val = lv_label_create(row);
-    lv_obj_set_style_text_color(val, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(val, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(val, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_label_set_text(val, "--");
     lv_obj_align(val, LV_ALIGN_RIGHT_MID, 0, 0);
@@ -140,7 +140,7 @@ void lora_screen_create()
 
     // Title
     lv_obj_t *title = lv_label_create(lora_screen);
-    lv_obj_set_style_text_color(title, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(title, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(title, &lv_font_montserrat_48, LV_PART_MAIN);
     lv_label_set_text(title, "LoRa");
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 5);
@@ -148,14 +148,14 @@ void lora_screen_create()
     // Power toggle (left of center)
     toggle_sw = lv_switch_create(lora_screen);
     lv_obj_set_size(toggle_sw, 100, 50);
-    lv_obj_set_style_bg_color(toggle_sw, lv_color_make(0x44, 0x44, 0x44), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(toggle_sw, lv_color_make(0x00, 0x44, 0x00), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(toggle_sw, lv_color_make(0x00, 0xCC, 0x66), LV_PART_MAIN | LV_STATE_CHECKED);
     lv_obj_add_event_cb(toggle_sw, on_toggle, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_align(toggle_sw, LV_ALIGN_TOP_MID, -90, 72);
 
     // Status label (right of toggle)
     status_label = lv_label_create(lora_screen);
-    lv_obj_set_style_text_color(status_label, lv_color_make(0xAA, 0xAA, 0xAA), LV_PART_MAIN);
+    lv_obj_set_style_text_color(status_label, lv_color_make(0x00, 0xAA, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(status_label, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_obj_align(status_label, LV_ALIGN_TOP_MID, 60, 87);
     update_status();
@@ -166,7 +166,7 @@ void lora_screen_create()
     lv_obj_set_size(data_panel, 380, 252);
     lv_obj_align(data_panel, LV_ALIGN_TOP_MID, 0, 136);
     lv_obj_set_style_bg_color(data_panel, lv_color_black(), LV_PART_MAIN);
-    lv_obj_set_style_border_color(data_panel, lv_color_make(0x33, 0x33, 0x33), LV_PART_MAIN);
+    lv_obj_set_style_border_color(data_panel, lv_color_make(0x00, 0x33, 0x00), LV_PART_MAIN);
     lv_obj_set_style_border_width(data_panel, 1, LV_PART_MAIN);
     lv_obj_set_style_radius(data_panel, 4, LV_PART_MAIN);
     lv_obj_set_style_pad_all(data_panel, 0, LV_PART_MAIN);
@@ -194,14 +194,14 @@ void lora_screen_create()
     lv_obj_align(boost_row, LV_ALIGN_TOP_MID, 0, 400);
 
     lv_obj_t *boost_lbl = lv_label_create(boost_row);
-    lv_obj_set_style_text_color(boost_lbl, lv_color_make(0xAA, 0xAA, 0xAA), LV_PART_MAIN);
+    lv_obj_set_style_text_color(boost_lbl, lv_color_make(0x00, 0xAA, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(boost_lbl, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_label_set_text(boost_lbl, "Boosted RX Gain");
     lv_obj_align(boost_lbl, LV_ALIGN_LEFT_MID, 0, 0);
 
     boosted_switch = lv_switch_create(boost_row);
     lv_obj_set_size(boosted_switch, 80, 40);
-    lv_obj_set_style_bg_color(boosted_switch, lv_color_make(0x44, 0x44, 0x44), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(boosted_switch, lv_color_make(0x00, 0x44, 0x00), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(boosted_switch, lv_color_make(0x00, 0xCC, 0x66), LV_PART_MAIN | LV_STATE_CHECKED);
     lv_obj_add_state(boosted_switch, LV_STATE_CHECKED);   // default ON (+2 dB RX sens)
     lv_obj_add_event_cb(boosted_switch, on_boosted_changed, LV_EVENT_VALUE_CHANGED, NULL);

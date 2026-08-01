@@ -42,7 +42,7 @@ static void show_aps()
     if (s_ap_count == 0) {
         lv_obj_t *l = lv_label_create(list_box);
         lv_obj_set_style_text_font(l, &lv_font_montserrat_16, LV_PART_MAIN);
-        lv_obj_set_style_text_color(l, lv_color_make(0x66, 0x66, 0x66), LV_PART_MAIN);
+        lv_obj_set_style_text_color(l, lv_color_make(0x00, 0x66, 0x00), LV_PART_MAIN);
         lv_label_set_text(l, "No APs found");
         lv_obj_add_flag(l, LV_OBJ_FLAG_FLOATING);
         lv_obj_center(l);
@@ -72,7 +72,7 @@ static void show_aps()
 
         lv_obj_t *l1 = lv_label_create(card);
         lv_obj_set_style_text_font(l1, &lv_font_montserrat_20, LV_PART_MAIN);
-        lv_obj_set_style_text_color(l1, lv_color_white(), LV_PART_MAIN);
+        lv_obj_set_style_text_color(l1, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
         lv_label_set_text(l1, s_aps[i].ssid[0] ? s_aps[i].ssid : "(hidden)");
 
         char det[80];
@@ -83,7 +83,7 @@ static void show_aps()
                  s_aps[i].channel, (int)s_aps[i].rssi);
         lv_obj_t *l2 = lv_label_create(card);
         lv_obj_set_style_text_font(l2, &lv_font_montserrat_14, LV_PART_MAIN);
-        lv_obj_set_style_text_color(l2, lv_color_make(0x99, 0x99, 0x99), LV_PART_MAIN);
+        lv_obj_set_style_text_color(l2, lv_color_make(0x00, 0x99, 0x00), LV_PART_MAIN);
         lv_label_set_text(l2, det);
     }
 }
@@ -139,7 +139,7 @@ static void update_buttons()
     const char *sl = (s_state == DST_SCANNING) ? "SCANNING..." :
                      (s_target >= 0)           ? "RESCAN"      : "SCAN";
     lv_label_set_text(btn_scan_lbl, sl);
-    lv_obj_set_style_bg_color(btn_scan, lv_color_make(0x00, 0x88, 0xCC), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(btn_scan, lv_color_black(), LV_PART_MAIN);
 
     if (s_target >= 0 && s_state != DST_SCANNING) {
         lv_obj_clear_flag(btn_atk, LV_OBJ_FLAG_HIDDEN);
@@ -251,6 +251,8 @@ static lv_obj_t *make_button(lv_obj_t *parent, lv_coord_t w, lv_coord_t h,
     lv_obj_clear_flag(b, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_add_flag(b, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_t *l = lv_label_create(b);
+    // White: this button's bg is a caller-supplied status color (START/STOP),
+    // so the label must stay readable against whichever one is showing.
     lv_obj_set_style_text_color(l, lv_color_white(), LV_PART_MAIN);
     lv_obj_set_style_text_font(l, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_obj_center(l);
@@ -266,7 +268,7 @@ void deauther_screen_create()
     lv_obj_clear_flag(screen, LV_OBJ_FLAG_SCROLLABLE);
 
     lv_obj_t *title = lv_label_create(screen);
-    lv_obj_set_style_text_color(title, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(title, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(title, &lv_font_montserrat_48, LV_PART_MAIN);
     lv_label_set_text(title, "Deauth");
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 8);
@@ -280,7 +282,7 @@ void deauther_screen_create()
 
     status_label = lv_label_create(screen);
     lv_obj_set_style_text_font(status_label, &lv_font_montserrat_16, LV_PART_MAIN);
-    lv_obj_set_style_text_color(status_label, lv_color_make(0x88, 0x88, 0x88), LV_PART_MAIN);
+    lv_obj_set_style_text_color(status_label, lv_color_make(0x00, 0x88, 0x00), LV_PART_MAIN);
     lv_label_set_text(status_label, "Tap SCAN to find nearby APs");
     lv_obj_align(status_label, LV_ALIGN_TOP_MID, 0, 82);
 
@@ -307,7 +309,7 @@ void deauther_screen_create()
     lv_obj_set_size(list_box, 404, 322);
     lv_obj_align(list_box, LV_ALIGN_TOP_MID, 0, 168);
     lv_obj_set_style_bg_color(list_box, lv_color_black(), LV_PART_MAIN);
-    lv_obj_set_style_border_color(list_box, lv_color_make(0x33, 0x33, 0x33), LV_PART_MAIN);
+    lv_obj_set_style_border_color(list_box, lv_color_make(0x00, 0x33, 0x00), LV_PART_MAIN);
     lv_obj_set_style_border_width(list_box, 1, LV_PART_MAIN);
     lv_obj_set_style_radius(list_box, 8, LV_PART_MAIN);
     lv_obj_set_style_pad_all(list_box, 6, LV_PART_MAIN);

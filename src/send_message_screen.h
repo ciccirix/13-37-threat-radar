@@ -13,4 +13,11 @@ void send_message_screen_show();
 // than a broadcast. Used by the Nodes screen's per-row tap handler.
 void send_message_screen_show_to(uint32_t dest_node);
 
+// ESP-NOW variant: reuse the same compose UI but route the send over the
+// out-of-mesh ESP-NOW link to `peer_id` (ENOW_BROADCAST_ID = broadcast).
+// The title switches to "ENOW -> [name]" and back-swipe returns to the
+// ESP-NOW screen instead of the Meshtastic swipe chain. Used by the
+// ESP-NOW screen's per-peer tap handler.
+void send_message_screen_show_espnow_to(uint32_t peer_id);
+
 bool send_message_screen_is_active();

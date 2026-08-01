@@ -51,7 +51,7 @@ static void make_channel_row(lv_obj_t *parent, int idx)
 
     lv_obj_t *card = lv_obj_create(parent);
     lv_obj_set_size(card, lv_pct(100), 100);
-    lv_obj_set_style_bg_color(card, lv_color_make(0x1C, 0x1C, 0x1E), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(card, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(card, LV_OPA_70, LV_PART_MAIN);
     lv_obj_set_style_radius(card, 12, LV_PART_MAIN);
     lv_obj_set_style_pad_hor(card, 16, LV_PART_MAIN);
@@ -97,7 +97,7 @@ static void make_channel_row(lv_obj_t *parent, int idx)
     }
     lv_obj_t *sub_lbl = lv_label_create(card);
     lv_label_set_text(sub_lbl, sub);
-    lv_obj_set_style_text_color(sub_lbl, lv_color_make(0xC7, 0xC7, 0xCC), LV_PART_MAIN);
+    lv_obj_set_style_text_color(sub_lbl, lv_color_make(0x00, 0xCC, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(sub_lbl, &lv_font_montserrat_14, LV_PART_MAIN);
     lv_label_set_long_mode(sub_lbl, LV_LABEL_LONG_DOT);
     lv_obj_align(sub_lbl, LV_ALIGN_BOTTOM_LEFT, 0, 0);
@@ -107,7 +107,7 @@ static void make_channel_row(lv_obj_t *parent, int idx)
     // active" - that'd be confusing when toggling off.
     lv_obj_t *sw = lv_switch_create(card);
     lv_obj_set_size(sw, 72, 38);
-    lv_obj_set_style_bg_color(sw, lv_color_make(0x44, 0x44, 0x44),
+    lv_obj_set_style_bg_color(sw, lv_color_make(0x00, 0x44, 0x00),
         LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(sw, lv_color_make(0x00, 0xCC, 0x66),
         LV_PART_MAIN | LV_STATE_CHECKED);
@@ -133,7 +133,7 @@ void channels_screen_create()
     lv_obj_set_style_border_width(ch_screen, 0, LV_PART_MAIN);
 
     lv_obj_t *title = lv_label_create(ch_screen);
-    lv_obj_set_style_text_color(title, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(title, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(title, &lv_font_montserrat_28, LV_PART_MAIN);
     lv_label_set_text(title, "CHANNELS");
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 8);
@@ -156,14 +156,14 @@ void channels_screen_create()
     // /Meshtastic/channels.txt is the same file that gets written on
     // every channel-state change here, and is re-read at boot.
     lv_obj_t *psk_hint = lv_label_create(ch_screen);
-    lv_obj_set_style_text_color(psk_hint, lv_color_make(0x55, 0x99, 0xCC), LV_PART_MAIN);
+    lv_obj_set_style_text_color(psk_hint, lv_color_make(0x00, 0xCC, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(psk_hint, &lv_font_montserrat_14, LV_PART_MAIN);
     lv_obj_set_style_text_align(psk_hint, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     lv_label_set_text(psk_hint, "Edit PSK in channels.txt on SD");
     lv_obj_align(psk_hint, LV_ALIGN_BOTTOM_MID, 0, -47);
 
     lv_obj_t *hint = lv_label_create(ch_screen);
-    lv_obj_set_style_text_color(hint, lv_color_make(0x44, 0x44, 0x44), LV_PART_MAIN);
+    lv_obj_set_style_text_color(hint, lv_color_make(0x00, 0x44, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(hint, &lv_font_montserrat_14, LV_PART_MAIN);
     lv_obj_set_style_text_align(hint, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     lv_label_set_text(hint, "Tap: activate   toggle: enable   swipe: back");

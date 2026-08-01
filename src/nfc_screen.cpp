@@ -226,7 +226,7 @@ static lv_obj_t *make_btn(lv_obj_t *parent, const char *text, int x_ofs, int y_o
     lv_obj_t *btn = lv_obj_create(parent);
     lv_obj_set_size(btn, 160, 60);
     lv_obj_set_style_radius(btn, 8, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(btn, lv_color_make(0x33, 0x33, 0x33), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(btn, lv_color_make(0x00, 0x33, 0x00), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(btn, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_border_width(btn, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(btn, 0, LV_PART_MAIN);
@@ -235,7 +235,7 @@ static lv_obj_t *make_btn(lv_obj_t *parent, const char *text, int x_ofs, int y_o
 
     lv_obj_t *lbl = lv_label_create(btn);
     lv_obj_set_style_text_font(lbl, &lv_font_montserrat_20, LV_PART_MAIN);
-    lv_obj_set_style_text_color(lbl, lv_color_make(0x77, 0x77, 0x77), LV_PART_MAIN);
+    lv_obj_set_style_text_color(lbl, lv_color_make(0x00, 0x77, 0x00), LV_PART_MAIN);
     lv_label_set_text(lbl, text);
     lv_obj_center(lbl);
 
@@ -251,7 +251,7 @@ void nfc_screen_create()
 
     // Title
     lv_obj_t *title = lv_label_create(nfc_screen);
-    lv_obj_set_style_text_color(title, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(title, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(title, &lv_font_montserrat_48, LV_PART_MAIN);
     lv_label_set_text(title, "NFC");
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 5);
@@ -259,14 +259,14 @@ void nfc_screen_create()
     // Power toggle
     toggle_sw = lv_switch_create(nfc_screen);
     lv_obj_set_size(toggle_sw, 100, 50);
-    lv_obj_set_style_bg_color(toggle_sw, lv_color_make(0x44, 0x44, 0x44), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(toggle_sw, lv_color_make(0x00, 0x44, 0x00), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(toggle_sw, lv_color_make(0x00, 0xCC, 0x66), LV_PART_MAIN | LV_STATE_CHECKED);
     lv_obj_add_event_cb(toggle_sw, on_toggle, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_align(toggle_sw, LV_ALIGN_TOP_MID, -90, 72);
 
     // Status label (right of toggle)
     status_label = lv_label_create(nfc_screen);
-    lv_obj_set_style_text_color(status_label, lv_color_make(0xAA, 0xAA, 0xAA), LV_PART_MAIN);
+    lv_obj_set_style_text_color(status_label, lv_color_make(0x00, 0xAA, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(status_label, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_obj_align(status_label, LV_ALIGN_TOP_MID, 60, 87);
 
@@ -280,8 +280,8 @@ void nfc_screen_create()
     data_panel = lv_obj_create(nfc_screen);
     lv_obj_set_size(data_panel, 390, 210);
     lv_obj_align(data_panel, LV_ALIGN_TOP_MID, 0, 232);
-    lv_obj_set_style_bg_color(data_panel, lv_color_make(0x0A, 0x0A, 0x0A), LV_PART_MAIN);
-    lv_obj_set_style_border_color(data_panel, lv_color_make(0x33, 0x33, 0x33), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(data_panel, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_border_color(data_panel, lv_color_make(0x00, 0x33, 0x00), LV_PART_MAIN);
     lv_obj_set_style_border_width(data_panel, 1, LV_PART_MAIN);
     lv_obj_set_style_radius(data_panel, 6, LV_PART_MAIN);
     lv_obj_set_style_pad_all(data_panel, 8, LV_PART_MAIN);
@@ -290,14 +290,14 @@ void nfc_screen_create()
 
     data_label = lv_label_create(data_panel);
     lv_obj_set_width(data_label, lv_pct(100));
-    lv_obj_set_style_text_color(data_label, lv_color_make(0xCC, 0xCC, 0xCC), LV_PART_MAIN);
+    lv_obj_set_style_text_color(data_label, lv_color_make(0x00, 0xCC, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(data_label, &lv_font_montserrat_14, LV_PART_MAIN);
     lv_label_set_long_mode(data_label, LV_LABEL_LONG_WRAP);
     lv_label_set_text(data_label, "");
 
     // Navigation hint
     lv_obj_t *hint = lv_label_create(nfc_screen);
-    lv_obj_set_style_text_color(hint, lv_color_make(0x44, 0x44, 0x44), LV_PART_MAIN);
+    lv_obj_set_style_text_color(hint, lv_color_make(0x00, 0x44, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(hint, &lv_font_montserrat_14, LV_PART_MAIN);
     lv_obj_set_style_text_align(hint, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     lv_label_set_text(hint, "Boot button to return");

@@ -88,6 +88,24 @@ static inline void px(int x, int y, uint16_t c)
     if ((unsigned)x < CV_W && (unsigned)y < CV_H) fb[y * CV_W + x] = c;
 }
 
+// Invalidate only a local rectangle of the canvas (in canvas pixel coords)
+// instead of the whole 355 KB buffer. Direct fb writes don't mark LVGL dirty,
+// so we push just the changed band to the display — a fraction of the PSRAM
+// blit bandwidth, which is what was starving the refresh and making the top
+// area-graph flicker/vanish.
+static void invalidate_canvas_rect(int lx, int ly, int lw, int lh)
+{
+    if (!canvas) return;
+    lv_area_t c;
+    lv_obj_get_coords(canvas, &c);
+    lv_area_t a;
+    a.x1 = c.x1 + lx;
+    a.y1 = c.y1 + ly;
+    a.x2 = c.x1 + lx + lw - 1;
+    a.y2 = c.y1 + ly + lh - 1;
+    lv_obj_invalidate_area(canvas, &a);
+}
+
 // ---- WiFi promiscuous (stesso schema di analyze_screen) ---------------------
 static void start_wifi()
 {
@@ -164,7 +182,10 @@ static void do_frame()
     s_epoch++;
     if (WF_Y0 + s_epoch >= WF_MAXY) s_epoch = 0;
 
-    lv_obj_invalidate(canvas);
+    // Only the area-graph band (fully redrawn each frame) and the one freshly
+    // drawn waterfall line changed — repaint just those, not all 355 KB.
+    invalidate_canvas_rect(0, AG_Y, CV_W, AG_H);
+    invalidate_canvas_rect(0, wy, CV_W, 1);
 }
 
 static void on_timer(lv_timer_t *)
@@ -213,13 +234,13 @@ void waterfall_screen_create()
 
     title_lbl = lv_label_create(screen);
     lv_obj_set_style_text_font(title_lbl, &lv_font_montserrat_20, LV_PART_MAIN);
-    lv_obj_set_style_text_color(title_lbl, lv_color_make(0x33, 0xBB, 0xFF), LV_PART_MAIN);
+    lv_obj_set_style_text_color(title_lbl, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_label_set_text(title_lbl, "Analizzatore Banda  Ch 6");
     lv_obj_align(title_lbl, LV_ALIGN_TOP_MID, 0, 8);
 
     info_lbl = lv_label_create(screen);
     lv_obj_set_style_text_font(info_lbl, &lv_font_montserrat_16, LV_PART_MAIN);
-    lv_obj_set_style_text_color(info_lbl, lv_color_make(0x88, 0x88, 0x88), LV_PART_MAIN);
+    lv_obj_set_style_text_color(info_lbl, lv_color_make(0x00, 0x88, 0x00), LV_PART_MAIN);
     lv_label_set_text(info_lbl, "tap = canale   swipe su = esci");
     lv_obj_align(info_lbl, LV_ALIGN_TOP_MID, 0, 36);
 

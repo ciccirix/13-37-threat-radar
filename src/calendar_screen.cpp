@@ -86,7 +86,7 @@ static lv_obj_t *make_cell(lv_obj_t *parent, lv_coord_t x, lv_coord_t y,
 
     lv_obj_t *l = lv_label_create(cell);
     lv_obj_set_style_text_font(l, &lv_font_montserrat_20, LV_PART_MAIN);
-    lv_obj_set_style_text_color(l, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(l, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_label_set_text(l, "");
     lv_obj_center(l);
 
@@ -146,7 +146,7 @@ static void populate_grid()
         if (is_today) {
             lv_obj_set_style_bg_color(cell_obj[i], col_today, LV_PART_MAIN);
             lv_obj_set_style_bg_opa(cell_obj[i], LV_OPA_COVER, LV_PART_MAIN);
-            lv_obj_set_style_text_color(cell_label[i], lv_color_black(), LV_PART_MAIN);
+            lv_obj_set_style_text_color(cell_label[i], lv_color_make(0x00, 0x22, 0x00), LV_PART_MAIN);
         } else {
             lv_obj_set_style_bg_opa(cell_obj[i], LV_OPA_TRANSP, LV_PART_MAIN);
             lv_obj_set_style_text_color(cell_label[i],
@@ -208,6 +208,8 @@ static lv_obj_t *make_button(lv_obj_t *parent, const char *text,
 
     lv_obj_t *l = lv_label_create(btn);
     lv_label_set_text(l, text);
+    // White: this button's bg is a caller-supplied color, so the label
+    // stays readable regardless of which one gets passed in.
     lv_obj_set_style_text_color(l, lv_color_white(), LV_PART_MAIN);
     lv_obj_set_style_text_font(l, font ? font : &lv_font_montserrat_20, LV_PART_MAIN);
     lv_obj_center(l);
@@ -247,7 +249,7 @@ void calendar_screen_create()
     lv_obj_add_event_cb(next_btn, on_next, LV_EVENT_CLICKED, NULL);
 
     month_label = lv_label_create(calendar_screen);
-    lv_obj_set_style_text_color(month_label, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(month_label, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(month_label, &lv_font_montserrat_28, LV_PART_MAIN);
     lv_label_set_text(month_label, "");
     lv_obj_align(month_label, LV_ALIGN_TOP_MID, 0, 77);

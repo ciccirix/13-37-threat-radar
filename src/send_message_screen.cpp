@@ -1,5 +1,7 @@
 #include "send_message_screen.h"
 #include "meshtastic.h"
+#include "esp_now_link.h"
+#include "espnow_screen.h"
 #include "configuration_screen.h"
 #include "nodes_screen.h"
 #include "map_screen.h"
@@ -50,6 +52,14 @@ static int   s_custom_count = 0;
 // (per-node DM tap from the Nodes screen). Reset back to broadcast each
 // time the user leaves the send screen via swipe-nav.
 static uint32_t   s_dest_node = 0xFFFFFFFFu;
+
+// Which transport the current send targets. TRANSPORT_MESH is the default and
+// preserves every existing Meshtastic path unchanged; TRANSPORT_ESPNOW is set
+// only when entered via send_message_screen_show_espnow_to() and routes sends
+// over the out-of-mesh ESP-NOW link instead. Reset to MESH on any Meshtastic
+// entry point so a stale ESP-NOW target can never leak into a mesh send.
+enum SendTransport { TRANSPORT_MESH = 0, TRANSPORT_ESPNOW = 1 };
+static SendTransport s_transport = TRANSPORT_MESH;
 
 // Most-recent DM we sent. Once meshtastic_send_text_to() returns true we
 // look up the latest outgoing tracker entry, latch its packet_id here,
@@ -146,6 +156,10 @@ static void delete_custom(int idx)
 
 static const char *short_name_for(uint32_t dest)
 {
+    if (s_transport == TRANSPORT_ESPNOW) {
+        const EnowPeer *p = esp_now_link_peer_by_id(dest);
+        return (p && p->name[0]) ? p->name : "????";
+    }
     int n = meshtastic_get_node_count();
     for (int i = 0; i < n; i++) {
         const MeshNode *m = meshtastic_get_node(i);
@@ -157,7 +171,16 @@ static const char *short_name_for(uint32_t dest)
 static void update_title()
 {
     if (!title_label) return;
-    if (s_dest_node != 0xFFFFFFFFu) {
+    if (s_transport == TRANSPORT_ESPNOW) {
+        char buf[48];
+        if (s_dest_node == ENOW_BROADCAST_ID)
+            snprintf(buf, sizeof(buf), "ENOW broadcast");
+        else
+            snprintf(buf, sizeof(buf), "ENOW -> [%s]", short_name_for(s_dest_node));
+        lv_label_set_text(title_label, buf);
+        lv_obj_set_style_text_color(title_label,
+            lv_color_make(0x33, 0xDD, 0xAA), LV_PART_MAIN);
+    } else if (s_dest_node != 0xFFFFFFFFu) {
         char buf[48];
         snprintf(buf, sizeof(buf), "DM -> [%s]",
                  short_name_for(s_dest_node));
@@ -166,7 +189,7 @@ static void update_title()
             lv_color_make(0xB8, 0xA4, 0xFF), LV_PART_MAIN);
     } else {
         lv_label_set_text(title_label, "SEND MESSAGE");
-        lv_obj_set_style_text_color(title_label, lv_color_white(), LV_PART_MAIN);
+        lv_obj_set_style_text_color(title_label, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     }
 }
 
@@ -181,6 +204,20 @@ static void show_send_status(const char *text, bool ok)
 
 static void send_text(const char *text)
 {
+    if (s_transport == TRANSPORT_ESPNOW) {
+        if (!esp_now_link_send_text_to(text, s_dest_node)) {
+            show_send_status("ESP-NOW off / no peer", false);
+            return;
+        }
+        show_send_status(s_dest_node == ENOW_BROADCAST_ID
+                             ? "Broadcast sent"
+                             : "DM sent", true);
+        // ESP-NOW has no mesh-style ACK tracker; nothing for the poll to watch.
+        s_watched_pkt_id    = 0;
+        s_last_render_state = -1;
+        return;
+    }
+
     if (!meshtastic_send_text_to(text, s_dest_node)) {
         show_send_status("Enable LoRa first", false);
         return;
@@ -312,6 +349,14 @@ static void on_confirm_backdrop(lv_event_t *e)
 
 static void on_gesture(lv_event_t *e)
 {
+    // Entered from the ESP-NOW screen: any swipe returns there rather than
+    // dropping into the Meshtastic nodes/map swipe chain.
+    if (s_transport == TRANSPORT_ESPNOW) {
+        s_transport = TRANSPORT_MESH;
+        s_dest_node = 0xFFFFFFFFu;
+        espnow_screen_show();
+        return;
+    }
     lv_indev_t *indev = lv_event_get_indev(e);
     lv_dir_t dir = lv_indev_get_gesture_dir(indev);
     if (dir == LV_DIR_LEFT) {
@@ -343,6 +388,8 @@ static lv_obj_t *make_card(lv_obj_t *parent, const char *text, int user_idx,
 
     lv_obj_t *lbl = lv_label_create(card);
     lv_obj_set_width(lbl, lv_pct(100));
+    // White: this card's bg is a caller-supplied color, so the label
+    // stays readable regardless of which one gets passed in.
     lv_obj_set_style_text_color(lbl, lv_color_white(), LV_PART_MAIN);
     lv_obj_set_style_text_font(lbl, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_label_set_text(lbl, text);
@@ -357,24 +404,24 @@ static void rebuild_list()
 
     // Preset card - hardcoded text, never deletable.
     make_card(list_box, PRESET_MSG, -1,
-              lv_color_make(0x11, 0x11, 0x11),
-              lv_color_make(0x33, 0x33, 0x33));
+              lv_color_black(),
+              lv_color_make(0x00, 0x33, 0x00));
 
     // Custom cards - long-press deletes (with confirmation).
     for (int i = 0; i < s_custom_count; i++) {
         make_card(list_box, s_customs[i], i,
-                  lv_color_make(0x1A, 0x1A, 0x22),
-                  lv_color_make(0x44, 0x44, 0x5A));
+                  lv_color_black(),
+                  lv_color_make(0x00, 0x5A, 0x00));
     }
 
     // Compose card at the bottom - visually distinct, opens the
     // textarea + keyboard overlay on tap.
     lv_obj_t *compose_card = make_card(list_box, "+ Compose...", -2,
-                                       lv_color_make(0x10, 0x20, 0x30),
-                                       lv_color_make(0x0A, 0x84, 0xFF));
+                                       lv_color_black(),
+                                       lv_color_make(0x00, 0xFF, 0x00));
     lv_obj_t *lbl = lv_obj_get_child(compose_card, 0);
     if (lbl) lv_obj_set_style_text_color(lbl,
-        lv_color_make(0x0A, 0x84, 0xFF), LV_PART_MAIN);
+        lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
 }
 
 // ---- overlays -------------------------------------------------------------
@@ -429,7 +476,7 @@ void send_message_screen_create()
     // Title + list + hint geometry mirrors the Meshtastic + Nodes
     // screens so all three feel visually identical when swiping.
     title_label = lv_label_create(send_screen);
-    lv_obj_set_style_text_color(title_label, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(title_label, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(title_label, &lv_font_montserrat_36, LV_PART_MAIN);
     lv_label_set_text(title_label, "SEND MESSAGE");
     lv_obj_align(title_label, LV_ALIGN_TOP_MID, 0, 21);
@@ -456,7 +503,7 @@ void send_message_screen_create()
     lv_obj_align(status_label, LV_ALIGN_BOTTOM_MID, 0, -55);
 
     nav_hint = lv_label_create(send_screen);
-    lv_obj_set_style_text_color(nav_hint, lv_color_make(0x44, 0x44, 0x44), LV_PART_MAIN);
+    lv_obj_set_style_text_color(nav_hint, lv_color_make(0x00, 0x44, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(nav_hint, &lv_font_montserrat_14, LV_PART_MAIN);
     lv_obj_set_style_text_align(nav_hint, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     lv_label_set_text(nav_hint, "Tap: send   hold custom: delete   swipe: nav");
@@ -472,9 +519,9 @@ void send_message_screen_create()
     lv_textarea_set_max_length(compose_ta, CUSTOM_MAX_LEN - 1);
     lv_textarea_set_placeholder_text(compose_ta, "Type your message...");
     lv_obj_set_style_text_font(compose_ta, &lv_font_montserrat_20, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(compose_ta, lv_color_make(0x11, 0x11, 0x11), LV_PART_MAIN);
-    lv_obj_set_style_text_color(compose_ta, lv_color_white(), LV_PART_MAIN);
-    lv_obj_set_style_border_color(compose_ta, lv_color_make(0x44, 0x44, 0x44), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(compose_ta, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(compose_ta, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
+    lv_obj_set_style_border_color(compose_ta, lv_color_make(0x00, 0x44, 0x00), LV_PART_MAIN);
     lv_obj_set_style_border_width(compose_ta, 1, LV_PART_MAIN);
     lv_obj_add_flag(compose_ta, LV_OBJ_FLAG_HIDDEN);
 
@@ -503,17 +550,17 @@ void send_message_screen_create()
     lv_obj_t *confirm_panel = lv_obj_create(confirm_overlay);
     lv_obj_set_size(confirm_panel, 340, 220);
     lv_obj_align(confirm_panel, LV_ALIGN_CENTER, 0, 0);
-    lv_obj_set_style_bg_color(confirm_panel, lv_color_make(0x1C, 0x1C, 0x1E), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(confirm_panel, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(confirm_panel, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_radius(confirm_panel, 16, LV_PART_MAIN);
-    lv_obj_set_style_border_color(confirm_panel, lv_color_make(0x44, 0x44, 0x48), LV_PART_MAIN);
+    lv_obj_set_style_border_color(confirm_panel, lv_color_make(0x00, 0x48, 0x00), LV_PART_MAIN);
     lv_obj_set_style_border_width(confirm_panel, 1, LV_PART_MAIN);
     lv_obj_set_style_pad_all(confirm_panel, 16, LV_PART_MAIN);
     lv_obj_add_flag(confirm_panel, LV_OBJ_FLAG_CLICKABLE);  // swallow backdrop taps
 
     confirm_text = lv_label_create(confirm_panel);
     lv_obj_set_width(confirm_text, lv_pct(100));
-    lv_obj_set_style_text_color(confirm_text, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(confirm_text, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(confirm_text, &lv_font_montserrat_16, LV_PART_MAIN);
     lv_obj_set_style_text_align(confirm_text, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     lv_label_set_text(confirm_text, "Delete this message?");
@@ -524,11 +571,11 @@ void send_message_screen_create()
     lv_obj_set_size(cancel_btn, 140, 56);
     lv_obj_align(cancel_btn, LV_ALIGN_BOTTOM_LEFT, 0, 0);
     lv_obj_set_style_radius(cancel_btn, 10, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(cancel_btn, lv_color_make(0x3A, 0x3A, 0x3C), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(cancel_btn, lv_color_black(), LV_PART_MAIN);
     lv_obj_add_event_cb(cancel_btn, on_confirm_cancel, LV_EVENT_CLICKED, NULL);
     lv_obj_t *cl = lv_label_create(cancel_btn);
     lv_label_set_text(cl, "Cancel");
-    lv_obj_set_style_text_color(cl, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(cl, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(cl, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_obj_center(cl);
 
@@ -540,6 +587,7 @@ void send_message_screen_create()
     lv_obj_add_event_cb(del_btn, on_confirm_delete, LV_EVENT_CLICKED, NULL);
     lv_obj_t *dl = lv_label_create(del_btn);
     lv_label_set_text(dl, "Delete");
+    // White: sits on the button's red bg, not the theme green.
     lv_obj_set_style_text_color(dl, lv_color_white(), LV_PART_MAIN);
     lv_obj_set_style_text_font(dl, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_obj_center(dl);
@@ -560,6 +608,7 @@ void send_message_screen_create()
 void send_message_screen_show()
 {
     main_loop_request_lvgl_priority(12);
+    s_transport = TRANSPORT_MESH;
     s_dest_node = 0xFFFFFFFFu;
     update_title();
     lv_label_set_text(status_label, "");
@@ -574,7 +623,21 @@ void send_message_screen_show()
 void send_message_screen_show_to(uint32_t dest_node)
 {
     main_loop_request_lvgl_priority(12);
+    s_transport = TRANSPORT_MESH;
     s_dest_node = dest_node;
+    update_title();
+    lv_label_set_text(status_label, "");
+    hide_compose();
+    hide_confirm();
+    rebuild_list();
+    lv_scr_load(send_screen);
+}
+
+void send_message_screen_show_espnow_to(uint32_t peer_id)
+{
+    main_loop_request_lvgl_priority(12);
+    s_transport = TRANSPORT_ESPNOW;
+    s_dest_node = peer_id;
     update_title();
     lv_label_set_text(status_label, "");
     hide_compose();

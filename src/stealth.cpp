@@ -64,8 +64,13 @@ void stealth_exit()
 // Count large magnitude deltas inside a sliding window. A deliberate shaker
 // motion produces several >SHAKE_DELTA_G swings per second; gentle wrist tilts
 // and a motorcycle's high-frequency buzz stay well under the bar.
-#define SHAKE_DELTA_G    2.0f
-#define SHAKE_HITS       8
+// Calibrated on-device 2026-07-31: at rest the per-sample delta is ~0.001 g,
+// normal wrist movement peaks around 0.3-0.5 g (one stray 0.68), a deliberate
+// hard shake sits at 0.7-1.4 g. So 0.7 g cleanly separates a shake from wear,
+// and requiring 5 such hits inside 1.4 s means a sustained shake — not a single
+// knock. (The old 2.0 g was unreachable: the hardware never exceeds ~1.4 g.)
+#define SHAKE_DELTA_G    0.7f
+#define SHAKE_HITS       5
 #define SHAKE_WINDOW_MS  1400
 
 static uint8_t  s_hits         = 0;

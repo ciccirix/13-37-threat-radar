@@ -54,7 +54,7 @@ static void update_freq_buttons()
     // 433 MHz only -- 315 receive doesn't work on this board's front-end
     // (antenna/matching tuned for the LoRa bands; noisy at 315). btn_433 is a
     // static band indicator, always shown active.
-    lv_obj_set_style_bg_color(btn_433, lv_color_make(0x00, 0x55, 0xAA), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(btn_433, lv_color_black(), LV_PART_MAIN);
 }
 
 static void update_fmt_button()
@@ -96,8 +96,8 @@ static void refresh_cell(int idx)
         lv_label_set_text(cell_id[idx],    "");
         lv_label_set_text(cell_bat[idx],   "");
         lv_label_set_text(cell_age[idx],   "");
-        lv_obj_set_style_bg_color(cell[idx], lv_color_make(0x1A, 0x1A, 0x1A), LV_PART_MAIN);
-        lv_obj_set_style_text_color(cell_press[idx], lv_color_make(0x44, 0x44, 0x44), LV_PART_MAIN);
+        lv_obj_set_style_bg_color(cell[idx], lv_color_black(), LV_PART_MAIN);
+        lv_obj_set_style_text_color(cell_press[idx], lv_color_make(0x00, 0x44, 0x00), LV_PART_MAIN);
         return;
     }
 
@@ -146,7 +146,7 @@ static void refresh_cell(int idx)
 
     // Tint cell border to match status
     lv_obj_set_style_border_color(cell[idx], col, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(cell[idx], lv_color_make(0x1A, 0x1A, 0x1A), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(cell[idx], lv_color_black(), LV_PART_MAIN);
 }
 
 static void on_update(lv_timer_t *)
@@ -195,7 +195,7 @@ static void on_update(lv_timer_t *)
         lv_obj_set_style_text_color(status_label, lv_color_make(0xFF, 0x44, 0x44), LV_PART_MAIN);
     } else {
         lv_label_set_text(status_label, "Scanner off");
-        lv_obj_set_style_text_color(status_label, lv_color_make(0x88, 0x88, 0x88), LV_PART_MAIN);
+        lv_obj_set_style_text_color(status_label, lv_color_make(0x00, 0x88, 0x00), LV_PART_MAIN);
     }
 
     update_start_button();
@@ -246,7 +246,7 @@ static lv_obj_t *make_btn(lv_obj_t *parent, const char *text, lv_coord_t x, lv_c
     lv_obj_set_size(btn, w, h);
     lv_obj_set_pos(btn, x, y);
     lv_obj_set_style_radius(btn, 8, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(btn, lv_color_make(0x22, 0x22, 0x22), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(btn, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(btn, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_border_width(btn, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(btn, 0, LV_PART_MAIN);
@@ -255,6 +255,9 @@ static lv_obj_t *make_btn(lv_obj_t *parent, const char *text, lv_coord_t x, lv_c
 
     lv_obj_t *lbl = lv_label_create(btn);
     lv_label_set_text(lbl, text);
+    // White: this button's bg is swapped to a status color after creation
+    // (update_start_button()/update_fmt_button()), so the label must stay
+    // readable against START-green/STOP-red/busy-grey/amber alike.
     lv_obj_set_style_text_color(lbl, lv_color_white(), LV_PART_MAIN);
     lv_obj_set_style_text_font(lbl, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_obj_center(lbl);
@@ -270,9 +273,9 @@ static void make_cell(lv_obj_t *parent, int idx, lv_coord_t x, lv_coord_t y)
     lv_obj_t *c = lv_obj_create(parent);
     lv_obj_set_size(c, 160, 145);
     lv_obj_set_pos(c, x, y);
-    lv_obj_set_style_bg_color(c, lv_color_make(0x1A, 0x1A, 0x1A), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(c, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(c, LV_OPA_COVER, LV_PART_MAIN);
-    lv_obj_set_style_border_color(c, lv_color_make(0x44, 0x44, 0x44), LV_PART_MAIN);
+    lv_obj_set_style_border_color(c, lv_color_make(0x00, 0x44, 0x00), LV_PART_MAIN);
     lv_obj_set_style_border_width(c, 2, LV_PART_MAIN);
     lv_obj_set_style_radius(c, 10, LV_PART_MAIN);
     lv_obj_set_style_pad_all(c, 0, LV_PART_MAIN);
@@ -281,35 +284,35 @@ static void make_cell(lv_obj_t *parent, int idx, lv_coord_t x, lv_coord_t y)
 
     // Wheel position label (FL / FR / RL / RR)
     lv_obj_t *pos_lbl = lv_label_create(c);
-    lv_obj_set_style_text_color(pos_lbl, lv_color_make(0xAA, 0xAA, 0xAA), LV_PART_MAIN);
+    lv_obj_set_style_text_color(pos_lbl, lv_color_make(0x00, 0xAA, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(pos_lbl, &lv_font_montserrat_16, LV_PART_MAIN);
     lv_label_set_text(pos_lbl, WHEEL_LABEL[idx]);
     lv_obj_align(pos_lbl, LV_ALIGN_TOP_MID, 0, 2);
 
     // Sensor ID (small, below position label)
     cell_id[idx] = lv_label_create(c);
-    lv_obj_set_style_text_color(cell_id[idx], lv_color_make(0x55, 0x55, 0x55), LV_PART_MAIN);
+    lv_obj_set_style_text_color(cell_id[idx], lv_color_make(0x00, 0x55, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(cell_id[idx], &lv_font_montserrat_14, LV_PART_MAIN);
     lv_label_set_text(cell_id[idx], "");
     lv_obj_align(cell_id[idx], LV_ALIGN_TOP_MID, 0, 20);
 
     // Pressure value (large — dropped one size to fit the shorter tile).
     cell_press[idx] = lv_label_create(c);
-    lv_obj_set_style_text_color(cell_press[idx], lv_color_make(0x44, 0x44, 0x44), LV_PART_MAIN);
+    lv_obj_set_style_text_color(cell_press[idx], lv_color_make(0x00, 0x44, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(cell_press[idx], &lv_font_montserrat_36, LV_PART_MAIN);
     lv_label_set_text(cell_press[idx], "--");
     lv_obj_align(cell_press[idx], LV_ALIGN_TOP_MID, 0, 36);
 
     // PSI unit label (below pressure)
     cell_unit[idx] = lv_label_create(c);
-    lv_obj_set_style_text_color(cell_unit[idx], lv_color_make(0x88, 0x88, 0x88), LV_PART_MAIN);
+    lv_obj_set_style_text_color(cell_unit[idx], lv_color_make(0x00, 0x88, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(cell_unit[idx], &lv_font_montserrat_14, LV_PART_MAIN);
     lv_label_set_text(cell_unit[idx], "PSI");
     lv_obj_align(cell_unit[idx], LV_ALIGN_TOP_MID, 0, 74);
 
     // Temperature
     cell_temp[idx] = lv_label_create(c);
-    lv_obj_set_style_text_color(cell_temp[idx], lv_color_make(0xAA, 0xAA, 0xAA), LV_PART_MAIN);
+    lv_obj_set_style_text_color(cell_temp[idx], lv_color_make(0x00, 0xAA, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(cell_temp[idx], &lv_font_montserrat_16, LV_PART_MAIN);
     lv_label_set_text(cell_temp[idx], "--");
     lv_obj_align(cell_temp[idx], LV_ALIGN_TOP_MID, -22, 92);
@@ -322,7 +325,7 @@ static void make_cell(lv_obj_t *parent, int idx, lv_coord_t x, lv_coord_t y)
 
     // Age indicator (bottom-right corner)
     cell_age[idx] = lv_label_create(c);
-    lv_obj_set_style_text_color(cell_age[idx], lv_color_make(0x55, 0x55, 0x55), LV_PART_MAIN);
+    lv_obj_set_style_text_color(cell_age[idx], lv_color_make(0x00, 0x55, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(cell_age[idx], &lv_font_montserrat_14, LV_PART_MAIN);
     lv_label_set_text(cell_age[idx], "");
     lv_obj_align(cell_age[idx], LV_ALIGN_BOTTOM_RIGHT, -4, -2);
@@ -339,7 +342,7 @@ void tpms_screen_create()
     // Title — sized to match the SETTINGS screen header so the two read
     // as siblings at the same hierarchy.
     lv_obj_t *title = lv_label_create(tpms_screen);
-    lv_obj_set_style_text_color(title, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(title, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(title, &lv_font_montserrat_48, LV_PART_MAIN);
     lv_label_set_text(title, "TPMS");
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 10);
@@ -359,7 +362,7 @@ void tpms_screen_create()
     // Status line — sits just below the single button row (ends y=102).
     status_label = lv_label_create(tpms_screen);
     lv_obj_set_style_text_font(status_label, &lv_font_montserrat_16, LV_PART_MAIN);
-    lv_obj_set_style_text_color(status_label, lv_color_make(0x88, 0x88, 0x88), LV_PART_MAIN);
+    lv_obj_set_style_text_color(status_label, lv_color_make(0x00, 0x88, 0x00), LV_PART_MAIN);
     lv_label_set_text(status_label, "Scanner off");
     lv_obj_align(status_label, LV_ALIGN_TOP_MID, 0, 110);
 

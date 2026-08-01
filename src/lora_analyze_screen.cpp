@@ -258,11 +258,11 @@ static void update_bars()
             lv_obj_set_style_bg_color(bars[i], rssi_color((int8_t)rssi), LV_PART_MAIN);
             lv_obj_set_style_bg_opa(bars[i], LV_OPA_COVER, LV_PART_MAIN);
         } else {
-            lv_obj_set_style_bg_color(bars[i], lv_color_make(0x33, 0x33, 0x33), LV_PART_MAIN);
+            lv_obj_set_style_bg_color(bars[i], lv_color_black(), LV_PART_MAIN);
             lv_obj_set_style_bg_opa(bars[i], LV_OPA_70, LV_PART_MAIN);
         }
         bool active = (i == s_cur_bin) && s_running;
-        lv_obj_set_style_border_color(bars[i], lv_color_white(), LV_PART_MAIN);
+        lv_obj_set_style_border_color(bars[i], lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
         lv_obj_set_style_border_width(bars[i], active ? 2 : 0, LV_PART_MAIN);
     }
 }
@@ -282,7 +282,7 @@ static void update_status()
         } else {
             lv_label_set_text(status_label, "Stopped");
             lv_obj_set_style_text_color(status_label,
-                lv_color_make(0x88, 0x88, 0x88), LV_PART_MAIN);
+                lv_color_make(0x00, 0x88, 0x00), LV_PART_MAIN);
         }
         return;
     }
@@ -298,7 +298,7 @@ static void update_status()
         lv_label_set_text_fmt(status_label,
             "scanning %s", s_bands[s_band].label);
         lv_obj_set_style_text_color(status_label,
-            lv_color_make(0xCC, 0xCC, 0xCC), LV_PART_MAIN);
+            lv_color_make(0x00, 0xCC, 0x00), LV_PART_MAIN);
     }
 }
 
@@ -357,7 +357,7 @@ static lv_obj_t *make_band_btn()
     lv_obj_t *b = lv_obj_create(screen);
     lv_obj_set_size(b, 100, 38);
     lv_obj_set_style_radius(b, 8, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(b, lv_color_make(0x22, 0x44, 0x66), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(b, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(b, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_border_width(b, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(b, 0, LV_PART_MAIN);
@@ -368,7 +368,7 @@ static lv_obj_t *make_band_btn()
 
     band_btn_label = lv_label_create(b);
     lv_label_set_text(band_btn_label, s_bands[s_band].short_label);
-    lv_obj_set_style_text_color(band_btn_label, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(band_btn_label, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(band_btn_label, &lv_font_montserrat_16, LV_PART_MAIN);
     lv_obj_center(band_btn_label);
     return b;
@@ -385,7 +385,7 @@ void lora_analyze_screen_create()
     band_btn = make_band_btn();
 
     title_label = lv_label_create(screen);
-    lv_obj_set_style_text_color(title_label, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(title_label, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(title_label, &lv_font_montserrat_48, LV_PART_MAIN);
     lv_label_set_text(title_label, "LoRa");
     // Anchored at the top centre to match the PAGER / TPMS / SETTINGS
@@ -394,13 +394,13 @@ void lora_analyze_screen_create()
     lv_obj_align(title_label, LV_ALIGN_TOP_MID, 0, 8);
 
     status_label = lv_label_create(screen);
-    lv_obj_set_style_text_color(status_label, lv_color_make(0xCC, 0xCC, 0xCC), LV_PART_MAIN);
+    lv_obj_set_style_text_color(status_label, lv_color_make(0x00, 0xCC, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(status_label, &lv_font_montserrat_14, LV_PART_MAIN);
     lv_label_set_text(status_label, "starting...");
     lv_obj_align(status_label, LV_ALIGN_TOP_MID, 0, 88);
 
     legend_label = lv_label_create(screen);
-    lv_obj_set_style_text_color(legend_label, lv_color_make(0x88, 0x88, 0x88), LV_PART_MAIN);
+    lv_obj_set_style_text_color(legend_label, lv_color_make(0x00, 0x88, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(legend_label, &lv_font_montserrat_14, LV_PART_MAIN);
     lv_label_set_text(legend_label, "");
     lv_obj_align(legend_label, LV_ALIGN_TOP_MID, 0, 108);
@@ -414,7 +414,7 @@ void lora_analyze_screen_create()
 
         bars[i] = lv_obj_create(screen);
         lv_obj_set_size(bars[i], BAR_W, 2);
-        lv_obj_set_style_bg_color(bars[i], lv_color_make(0x33, 0x33, 0x33), LV_PART_MAIN);
+        lv_obj_set_style_bg_color(bars[i], lv_color_black(), LV_PART_MAIN);
         lv_obj_set_style_bg_opa(bars[i], LV_OPA_70, LV_PART_MAIN);
         lv_obj_set_style_radius(bars[i], 3, LV_PART_MAIN);
         lv_obj_set_style_pad_all(bars[i], 0, LV_PART_MAIN);
@@ -423,7 +423,7 @@ void lora_analyze_screen_create()
         lv_obj_set_pos(bars[i], x, CHART_BOTTOM_Y - 2);
 
         bin_labels[i] = lv_label_create(screen);
-        lv_obj_set_style_text_color(bin_labels[i], lv_color_make(0xAA, 0xAA, 0xAA), LV_PART_MAIN);
+        lv_obj_set_style_text_color(bin_labels[i], lv_color_make(0x00, 0xAA, 0x00), LV_PART_MAIN);
         lv_obj_set_style_text_font(bin_labels[i], &lv_font_montserrat_14, LV_PART_MAIN);
         lv_label_set_text(bin_labels[i], "");
         lv_obj_set_pos(bin_labels[i], x - 4, CHART_BOTTOM_Y + 4);
@@ -432,7 +432,7 @@ void lora_analyze_screen_create()
 
     lv_obj_t *base = lv_obj_create(screen);
     lv_obj_set_size(base, total_w, 1);
-    lv_obj_set_style_bg_color(base, lv_color_make(0x44, 0x44, 0x44), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(base, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(base, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_border_width(base, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(base, 0, LV_PART_MAIN);
@@ -440,7 +440,7 @@ void lora_analyze_screen_create()
     lv_obj_set_pos(base, start_x, CHART_BOTTOM_Y);
 
     lv_obj_t *axis_hint = lv_label_create(screen);
-    lv_obj_set_style_text_color(axis_hint, lv_color_make(0x66, 0x66, 0x66), LV_PART_MAIN);
+    lv_obj_set_style_text_color(axis_hint, lv_color_make(0x00, 0x66, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(axis_hint, &lv_font_montserrat_14, LV_PART_MAIN);
     lv_label_set_text(axis_hint, "MHz   -   tap band to switch");
     lv_obj_align(axis_hint, LV_ALIGN_BOTTOM_MID, 0, -100);

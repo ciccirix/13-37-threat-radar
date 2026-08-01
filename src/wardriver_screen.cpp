@@ -478,7 +478,7 @@ static void make_status_row(lv_obj_t *screen, const char *field,
     lv_obj_align(row, LV_ALIGN_TOP_MID, 0, y);
 
     lv_obj_t *lbl = lv_label_create(row);
-    lv_obj_set_style_text_color(lbl, lv_color_make(0xAA, 0xAA, 0xAA), LV_PART_MAIN);
+    lv_obj_set_style_text_color(lbl, lv_color_make(0x00, 0xAA, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(lbl, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_label_set_text(lbl, field);
     lv_obj_align(lbl, LV_ALIGN_LEFT_MID, 0, 0);
@@ -504,14 +504,14 @@ static void make_toggle_row(lv_obj_t *screen, const char *field,
     lv_obj_align(row, LV_ALIGN_TOP_MID, 0, y);
 
     lv_obj_t *lbl = lv_label_create(row);
-    lv_obj_set_style_text_color(lbl, lv_color_make(0xAA, 0xAA, 0xAA), LV_PART_MAIN);
+    lv_obj_set_style_text_color(lbl, lv_color_make(0x00, 0xAA, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(lbl, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_label_set_text(lbl, field);
     lv_obj_align(lbl, LV_ALIGN_LEFT_MID, 0, 0);
 
     lv_obj_t *sw = lv_switch_create(row);
     lv_obj_set_size(sw, 80, 40);
-    lv_obj_set_style_bg_color(sw, lv_color_make(0x44, 0x44, 0x44), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(sw, lv_color_make(0x00, 0x44, 0x00), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_color(sw, lv_color_make(0x00, 0xCC, 0x66), LV_PART_MAIN | LV_STATE_CHECKED);
     lv_obj_add_state(sw, LV_STATE_CHECKED);  // default ON
     lv_obj_align(sw, LV_ALIGN_RIGHT_MID, 0, 0);
@@ -533,7 +533,7 @@ void wardriver_screen_create()
     lv_obj_add_event_cb(wardriver_screen, on_gesture, LV_EVENT_GESTURE, NULL);
 
     lv_obj_t *title = lv_label_create(wardriver_screen);
-    lv_obj_set_style_text_color(title, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(title, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(title, &lv_font_montserrat_48, LV_PART_MAIN);
     lv_label_set_text(title, "WARDRIVER");
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 25);
@@ -548,7 +548,7 @@ void wardriver_screen_create()
     lv_obj_add_event_cb(bt_toggle_sw,   on_bt_toggle,   LV_EVENT_VALUE_CHANGED, NULL);
 
     device_count_label = lv_label_create(wardriver_screen);
-    lv_obj_set_style_text_color(device_count_label, lv_color_make(0xAA, 0xAA, 0xAA), LV_PART_MAIN);
+    lv_obj_set_style_text_color(device_count_label, lv_color_make(0x00, 0xAA, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(device_count_label, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_label_set_text(device_count_label, "WiFi: 0  BT: 0");
     lv_obj_align(device_count_label, LV_ALIGN_TOP_MID, 0, 340);
@@ -556,13 +556,15 @@ void wardriver_screen_create()
     start_btn = lv_button_create(wardriver_screen);
     lv_obj_set_size(start_btn, 220, 60);
     lv_obj_align(start_btn, LV_ALIGN_BOTTOM_MID, 0, -40);
-    lv_obj_set_style_bg_color(start_btn, lv_color_make(0x44, 0x44, 0x44), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(start_btn, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_radius(start_btn, 12, LV_PART_MAIN);
     lv_obj_set_style_border_width(start_btn, 0, LV_PART_MAIN);
     lv_obj_clear_flag(start_btn, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_add_event_cb(start_btn, on_start_stop, LV_EVENT_CLICKED, NULL);
 
     start_btn_label = lv_label_create(start_btn);
+    // White: this button's bg toggles between START-green and STOP-red, so
+    // the label must stay readable against both, not just the theme green.
     lv_obj_set_style_text_color(start_btn_label, lv_color_white(), LV_PART_MAIN);
     lv_obj_set_style_text_font(start_btn_label, &lv_font_montserrat_48, LV_PART_MAIN);
     lv_label_set_text(start_btn_label, "START");

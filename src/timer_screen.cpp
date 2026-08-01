@@ -333,6 +333,8 @@ static lv_obj_t *make_button(lv_obj_t *parent, const char *text,
 
     lv_obj_t *lbl = lv_label_create(btn);
     lv_label_set_text(lbl, text);
+    // White: this button's bg is a caller-supplied status color
+    // (START/PAUSE/RESET), so the label stays readable against any of them.
     lv_obj_set_style_text_color(lbl, lv_color_white(), LV_PART_MAIN);
     lv_obj_set_style_text_font(lbl, font ? font : &lv_font_montserrat_20, LV_PART_MAIN);
     lv_obj_center(lbl);
@@ -349,9 +351,9 @@ static lv_obj_t *make_preset_chip(lv_obj_t *parent, const char *label,
     lv_obj_t *chip = lv_obj_create(parent);
     lv_obj_set_size(chip, 120, 68);
     lv_obj_set_style_radius(chip, 34, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(chip, lv_color_make(0x22, 0x44, 0x66), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(chip, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(chip, LV_OPA_COVER, LV_PART_MAIN);
-    lv_obj_set_style_border_color(chip, lv_color_make(0x44, 0x88, 0xCC), LV_PART_MAIN);
+    lv_obj_set_style_border_color(chip, lv_color_make(0x00, 0xCC, 0x00), LV_PART_MAIN);
     lv_obj_set_style_border_width(chip, 1, LV_PART_MAIN);
     lv_obj_set_style_pad_all(chip, 0, LV_PART_MAIN);
     lv_obj_clear_flag(chip, LV_OBJ_FLAG_SCROLLABLE);
@@ -359,7 +361,7 @@ static lv_obj_t *make_preset_chip(lv_obj_t *parent, const char *label,
 
     lv_obj_t *lbl = lv_label_create(chip);
     lv_label_set_text(lbl, label);
-    lv_obj_set_style_text_color(lbl, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(lbl, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(lbl, &lv_font_montserrat_28, LV_PART_MAIN);
     lv_obj_center(lbl);
 
@@ -373,12 +375,12 @@ static lv_obj_t *make_preset_chip(lv_obj_t *parent, const char *label,
 static void style_roller(lv_obj_t *r)
 {
     lv_obj_set_style_text_font(r, &lv_font_montserrat_28, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(r, lv_color_make(0x22, 0x22, 0x22), LV_PART_MAIN);
-    lv_obj_set_style_text_color(r, lv_color_white(), LV_PART_MAIN);
-    lv_obj_set_style_border_color(r, lv_color_make(0x55, 0x55, 0x55), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(r, lv_color_black(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(r, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
+    lv_obj_set_style_border_color(r, lv_color_make(0x00, 0x55, 0x00), LV_PART_MAIN);
     lv_obj_set_style_border_width(r, 1, LV_PART_MAIN);
     lv_obj_set_style_bg_color(r, lv_color_make(0x00, 0x55, 0x33), LV_PART_SELECTED);
-    lv_obj_set_style_text_color(r, lv_color_white(), LV_PART_SELECTED);
+    lv_obj_set_style_text_color(r, lv_color_make(0x00, 0xFF, 0x00), LV_PART_SELECTED);
 }
 
 // ---- Idle panel -----------------------------------------------------------
@@ -413,7 +415,7 @@ static void build_idle_panel()
     int xs[3] = { -110, 0, 110 };
     for (int i = 0; i < 3; i++) {
         lv_obj_t *u = lv_label_create(idle_panel);
-        lv_obj_set_style_text_color(u, lv_color_white(), LV_PART_MAIN);
+        lv_obj_set_style_text_color(u, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
         lv_obj_set_style_text_font(u, &lv_font_montserrat_28, LV_PART_MAIN);
         lv_label_set_text(u, units[i]);
         lv_obj_align(u, LV_ALIGN_TOP_MID, xs[i], 6);
@@ -508,14 +510,14 @@ static void build_run_panel()
         lv_color_make(0x00, 0xCC, 0xFF), LV_PART_INDICATOR);
 
     countdown_label = lv_label_create(run_panel);
-    lv_obj_set_style_text_color(countdown_label, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(countdown_label, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(countdown_label, &lv_font_montserrat_48, LV_PART_MAIN);
     lv_label_set_text(countdown_label, "0:00");
     lv_obj_align(countdown_label, LV_ALIGN_TOP_MID, 0, 110);
 
     total_hint_label = lv_label_create(run_panel);
     lv_obj_set_style_text_color(total_hint_label,
-        lv_color_make(0x88, 0x88, 0x88), LV_PART_MAIN);
+        lv_color_make(0x00, 0x88, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(total_hint_label, &lv_font_montserrat_16, LV_PART_MAIN);
     lv_label_set_text(total_hint_label, "");
     lv_obj_align(total_hint_label, LV_ALIGN_TOP_MID, 0, 170);
@@ -540,7 +542,7 @@ static void build_expired_panel()
     lv_obj_add_flag(expired_panel, LV_OBJ_FLAG_HIDDEN);
 
     lv_obj_t *title = lv_label_create(expired_panel);
-    lv_obj_set_style_text_color(title, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(title, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(title, &lv_font_montserrat_48, LV_PART_MAIN);
     lv_label_set_text(title, "TIME'S UP");
     lv_obj_align(title, LV_ALIGN_CENTER, 0, -40);
@@ -565,7 +567,7 @@ void timer_screen_create()
 
     // Title
     lv_obj_t *title = lv_label_create(timer_screen);
-    lv_obj_set_style_text_color(title, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(title, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(title, &lv_font_montserrat_28, LV_PART_MAIN);
     lv_label_set_text(title, "TIMER");
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 12);

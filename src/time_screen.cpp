@@ -29,9 +29,9 @@ static lv_obj_t *make_tile(lv_obj_t *parent, const char *label_text)
 {
     lv_obj_t *tile = lv_obj_create(parent);
     lv_obj_set_size(tile, 180, 180);
-    lv_obj_set_style_bg_color(tile, lv_color_make(0x11, 0x11, 0x11), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(tile, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(tile, LV_OPA_COVER, LV_PART_MAIN);
-    lv_obj_set_style_border_color(tile, lv_color_make(0x44, 0x44, 0x44), LV_PART_MAIN);
+    lv_obj_set_style_border_color(tile, lv_color_make(0x00, 0x44, 0x00), LV_PART_MAIN);
     lv_obj_set_style_border_width(tile, 1, LV_PART_MAIN);
     lv_obj_set_style_radius(tile, 14, LV_PART_MAIN);
     lv_obj_set_style_pad_all(tile, 0, LV_PART_MAIN);
@@ -39,7 +39,7 @@ static lv_obj_t *make_tile(lv_obj_t *parent, const char *label_text)
     lv_obj_add_flag(tile, LV_OBJ_FLAG_CLICKABLE);
 
     lv_obj_t *lbl = lv_label_create(tile);
-    lv_obj_set_style_text_color(lbl, lv_color_make(0xCC, 0xCC, 0xCC), LV_PART_MAIN);
+    lv_obj_set_style_text_color(lbl, lv_color_make(0x00, 0xCC, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(lbl, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_label_set_text(lbl, label_text);
     lv_obj_align(lbl, LV_ALIGN_BOTTOM_MID, 0, -12);
@@ -365,7 +365,7 @@ void time_screen_create()
     lv_obj_set_style_border_width(time_screen, 0, LV_PART_MAIN);
 
     lv_obj_t *title = lv_label_create(time_screen);
-    lv_obj_set_style_text_color(title, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(title, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(title, &lv_font_montserrat_28, LV_PART_MAIN);
     lv_label_set_text(title, "TIME");
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 8);

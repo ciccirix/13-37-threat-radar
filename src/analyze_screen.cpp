@@ -179,7 +179,7 @@ static void refresh()
         lv_obj_set_style_bg_color(bars[i], bar_colour(s_chan[i].pps), LV_PART_MAIN);
 
         bool active = (i == s_cur_ch - 1);
-        lv_obj_set_style_border_color(bars[i], lv_color_white(), LV_PART_MAIN);
+        lv_obj_set_style_border_color(bars[i], lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
         lv_obj_set_style_border_width(bars[i], active ? 2 : 0, LV_PART_MAIN);
 
         if (s_chan[i].pps > best_pps) { best_pps = s_chan[i].pps; best_ch = i + 1; }
@@ -235,7 +235,7 @@ void analyze_screen_create()
     lv_obj_set_style_pad_all(screen, 0, LV_PART_MAIN);
 
     title_label = lv_label_create(screen);
-    lv_obj_set_style_text_color(title_label, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(title_label, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(title_label, &lv_font_montserrat_48, LV_PART_MAIN);
     lv_label_set_text(title_label, "WiFi");
     // Anchored at the top centre to match the PAGER / TPMS / SETTINGS
@@ -244,13 +244,13 @@ void analyze_screen_create()
     lv_obj_align(title_label, LV_ALIGN_TOP_MID, 0, 8);
 
     status_label = lv_label_create(screen);
-    lv_obj_set_style_text_color(status_label, lv_color_make(0xCC, 0xCC, 0xCC), LV_PART_MAIN);
+    lv_obj_set_style_text_color(status_label, lv_color_make(0x00, 0xCC, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(status_label, &lv_font_montserrat_14, LV_PART_MAIN);
     lv_label_set_text(status_label, "starting...");
     lv_obj_align(status_label, LV_ALIGN_TOP_MID, 0, 88);
 
     legend_label = lv_label_create(screen);
-    lv_obj_set_style_text_color(legend_label, lv_color_make(0x88, 0x88, 0x88), LV_PART_MAIN);
+    lv_obj_set_style_text_color(legend_label, lv_color_make(0x00, 0x88, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(legend_label, &lv_font_montserrat_14, LV_PART_MAIN);
     lv_label_set_text(legend_label, "");
     lv_obj_align(legend_label, LV_ALIGN_TOP_MID, 0, 108);
@@ -274,7 +274,7 @@ void analyze_screen_create()
         lv_obj_set_pos(bars[i], x, CHART_BOTTOM_Y - 2);
 
         ch_labels[i] = lv_label_create(screen);
-        lv_obj_set_style_text_color(ch_labels[i], lv_color_make(0xAA, 0xAA, 0xAA), LV_PART_MAIN);
+        lv_obj_set_style_text_color(ch_labels[i], lv_color_make(0x00, 0xAA, 0x00), LV_PART_MAIN);
         lv_obj_set_style_text_font(ch_labels[i], &lv_font_montserrat_14, LV_PART_MAIN);
         lv_label_set_text_fmt(ch_labels[i], "%d", i + 1);
         // Centre each channel number under its bar.
@@ -284,7 +284,7 @@ void analyze_screen_create()
     // Baseline under the bars.
     lv_obj_t *base = lv_obj_create(screen);
     lv_obj_set_size(base, total_w, 1);
-    lv_obj_set_style_bg_color(base, lv_color_make(0x44, 0x44, 0x44), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(base, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(base, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_border_width(base, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(base, 0, LV_PART_MAIN);

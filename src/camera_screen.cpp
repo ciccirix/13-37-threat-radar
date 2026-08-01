@@ -77,7 +77,9 @@ static void cam_beacon_cb(const WifiBeacon *b)
     if (v) enqueue(b->bssid, b->rssi, b->channel, v, b->ssid, 'W');
 }
 
-static void cam_ble_cb(esp_ble_gap_cb_param_t *param)
+// Kept for the scanner redesign (BLE will return time-sliced with WiFi); unused
+// for now since OFF-AIR runs WiFi-only to avoid the coexistence crash.
+static void __attribute__((unused)) cam_ble_cb(esp_ble_gap_cb_param_t *param)
 {
     auto &res = param->scan_rst;
     char name[33] = {};
@@ -104,8 +106,12 @@ static void rf_on()
     if (!s_queue) s_queue = xQueueCreate(CAM_QLEN, sizeof(CamHit));
     s_dev_count = 0;
     s_dirty = true;
+    // WiFi promiscuous ONLY. Running WiFi-promiscuous + BLE-scan at the same time
+    // hard-crashes/reboots this S3 build (radio coexistence) — it was the only
+    // tile that started both at once. Surveillance cams (Ring/Flock/Axon…) are
+    // WiFi devices, so WiFi covers the useful case; the BLE half will come back
+    // time-sliced (alternate WiFi/BLE) in the scanner redesign.
     wifi_beacon_add(cam_beacon_cb);
-    ble_scan_add(cam_ble_cb);
     s_rf_on = true;
 }
 
@@ -113,7 +119,6 @@ static void rf_off()
 {
     if (!s_rf_on) return;
     wifi_beacon_remove(cam_beacon_cb);
-    ble_scan_remove(cam_ble_cb);
     s_rf_on = false;
 }
 
@@ -146,7 +151,7 @@ static lv_obj_t *make_card(lv_color_t border)
     lv_obj_t *card = lv_obj_create(list_box);
     lv_obj_set_width(card, lv_pct(100));
     lv_obj_set_height(card, LV_SIZE_CONTENT);
-    lv_obj_set_style_bg_color(card, lv_color_make(0x16, 0x16, 0x16), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(card, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(card, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_border_color(card, border, LV_PART_MAIN);
     lv_obj_set_style_border_width(card, 1, LV_PART_MAIN);
@@ -171,7 +176,7 @@ static void placeholder(const char *txt)
 {
     lv_obj_t *l = lv_label_create(list_box);
     lv_obj_set_style_text_font(l, &lv_font_montserrat_16, LV_PART_MAIN);
-    lv_obj_set_style_text_color(l, lv_color_make(0x66, 0x66, 0x66), LV_PART_MAIN);
+    lv_obj_set_style_text_color(l, lv_color_make(0x00, 0x66, 0x00), LV_PART_MAIN);
     lv_label_set_text(l, txt);
     lv_obj_add_flag(l, LV_OBJ_FLAG_FLOATING);
     lv_obj_center(l);
@@ -291,7 +296,7 @@ static void update_status()
     // LAN mode
     if (WiFi.status() != WL_CONNECTED) {
         lv_label_set_text(status_label, "Not connected - join WiFi (WiFi tile), then LAN AUDIT");
-        lv_obj_set_style_text_color(status_label, lv_color_make(0x88, 0x88, 0x88), LV_PART_MAIN);
+        lv_obj_set_style_text_color(status_label, lv_color_make(0x00, 0x88, 0x00), LV_PART_MAIN);
         return;
     }
     int exposed = 0;
@@ -320,7 +325,7 @@ static void update_status()
         } else {
             snprintf(buf, sizeof(buf), "Connected to %s - tap LAN AUDIT", WiFi.SSID().c_str());
             lv_label_set_text(status_label, buf);
-            lv_obj_set_style_text_color(status_label, lv_color_make(0x88, 0x88, 0x88), LV_PART_MAIN);
+            lv_obj_set_style_text_color(status_label, lv_color_make(0x00, 0x88, 0x00), LV_PART_MAIN);
         }
         break;
     }
@@ -410,6 +415,8 @@ static lv_obj_t *make_button(lv_obj_t *parent, lv_coord_t w, lv_color_t bg, lv_o
     lv_obj_clear_flag(b, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_add_flag(b, LV_OBJ_FLAG_CLICKABLE);
     lv_obj_t *l = lv_label_create(b);
+    // White: this button's bg is a caller-supplied color, so the label
+    // stays readable regardless of which one gets passed in.
     lv_obj_set_style_text_color(l, lv_color_white(), LV_PART_MAIN);
     lv_obj_set_style_text_font(l, &lv_font_montserrat_16, LV_PART_MAIN);
     lv_obj_center(l);
@@ -425,7 +432,7 @@ void camera_screen_create()
     lv_obj_clear_flag(screen, LV_OBJ_FLAG_SCROLLABLE);
 
     lv_obj_t *title = lv_label_create(screen);
-    lv_obj_set_style_text_color(title, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(title, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(title, &lv_font_montserrat_48, LV_PART_MAIN);
     lv_label_set_text(title, "Cameras");
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 8);
@@ -450,7 +457,7 @@ void camera_screen_create()
 
     status_label = lv_label_create(screen);
     lv_obj_set_style_text_font(status_label, &lv_font_montserrat_16, LV_PART_MAIN);
-    lv_obj_set_style_text_color(status_label, lv_color_make(0x88, 0x88, 0x88), LV_PART_MAIN);
+    lv_obj_set_style_text_color(status_label, lv_color_make(0x00, 0x88, 0x00), LV_PART_MAIN);
     lv_label_set_text(status_label, "Off-air scan: WiFi + BLE");
     lv_obj_align(status_label, LV_ALIGN_TOP_MID, 0, 116);
 
@@ -458,7 +465,7 @@ void camera_screen_create()
     lv_obj_set_size(list_box, 404, 344);
     lv_obj_align(list_box, LV_ALIGN_TOP_MID, 0, 144);
     lv_obj_set_style_bg_color(list_box, lv_color_black(), LV_PART_MAIN);
-    lv_obj_set_style_border_color(list_box, lv_color_make(0x33, 0x33, 0x33), LV_PART_MAIN);
+    lv_obj_set_style_border_color(list_box, lv_color_make(0x00, 0x33, 0x00), LV_PART_MAIN);
     lv_obj_set_style_border_width(list_box, 1, LV_PART_MAIN);
     lv_obj_set_style_radius(list_box, 8, LV_PART_MAIN);
     lv_obj_set_style_pad_all(list_box, 6, LV_PART_MAIN);

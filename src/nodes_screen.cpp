@@ -204,7 +204,7 @@ static void make_node_entry(lv_obj_t *parent, const MeshNode *n)
     lv_obj_set_style_bg_color(entry, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(entry, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_border_side(entry, LV_BORDER_SIDE_BOTTOM, LV_PART_MAIN);
-    lv_obj_set_style_border_color(entry, lv_color_make(0x33, 0x33, 0x33), LV_PART_MAIN);
+    lv_obj_set_style_border_color(entry, lv_color_make(0x00, 0x33, 0x00), LV_PART_MAIN);
     lv_obj_set_style_border_width(entry, 1, LV_PART_MAIN);
     lv_obj_set_style_pad_all(entry, 8, LV_PART_MAIN);
     lv_obj_set_style_pad_row(entry, 2, LV_PART_MAIN);
@@ -239,7 +239,7 @@ static void make_node_entry(lv_obj_t *parent, const MeshNode *n)
     // Long name (white)
     lv_obj_t *txt = lv_label_create(entry);
     lv_obj_set_width(txt, lv_pct(100));
-    lv_obj_set_style_text_color(txt, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(txt, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(txt, &lv_font_montserrat_16, LV_PART_MAIN);
     lv_label_set_text(txt, n->long_name);
     lv_label_set_long_mode(txt, LV_LABEL_LONG_WRAP);
@@ -345,7 +345,7 @@ static void make_node_entry(lv_obj_t *parent, const MeshNode *n)
     if (p > 0) {
         lv_obj_t *det = lv_label_create(entry);
         lv_obj_set_width(det, lv_pct(100));
-        lv_obj_set_style_text_color(det, lv_color_make(0x88, 0x88, 0x88), LV_PART_MAIN);
+        lv_obj_set_style_text_color(det, lv_color_make(0x00, 0x88, 0x00), LV_PART_MAIN);
         lv_obj_set_style_text_font(det, &lv_font_montserrat_14, LV_PART_MAIN);
         lv_label_set_text(det, detail);
         lv_label_set_long_mode(det, LV_LABEL_LONG_WRAP);
@@ -359,7 +359,7 @@ static void rebuild_list()
     if (node_count == 0) {
         lv_obj_t *lbl = lv_label_create(nodes_box);
         lv_obj_add_flag(lbl, LV_OBJ_FLAG_FLOATING);  // exclude from flex layout so center works
-        lv_obj_set_style_text_color(lbl, lv_color_make(0x55, 0x55, 0x55), LV_PART_MAIN);
+        lv_obj_set_style_text_color(lbl, lv_color_make(0x00, 0x55, 0x00), LV_PART_MAIN);
         lv_obj_set_style_text_font(lbl, &lv_font_montserrat_16, LV_PART_MAIN);
         lv_label_set_text(lbl, "No nodes detected yet.");
         lv_obj_center(lbl);
@@ -381,7 +381,7 @@ void nodes_screen_create()
     // Title + list + hint geometry mirrors the Meshtastic screen so
     // the two feel visually identical when swiping between them.
     lv_obj_t *title = lv_label_create(nodes_screen);
-    lv_obj_set_style_text_color(title, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(title, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(title, &lv_font_montserrat_48, LV_PART_MAIN);
     lv_label_set_text(title, "NODES");
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 21);
@@ -391,7 +391,7 @@ void nodes_screen_create()
     lv_obj_set_size(nodes_box, 360, 340);
     lv_obj_align(nodes_box, LV_ALIGN_TOP_MID, 0, 87);
     lv_obj_set_style_bg_color(nodes_box, lv_color_black(), LV_PART_MAIN);
-    lv_obj_set_style_border_color(nodes_box, lv_color_make(0x33, 0x33, 0x33), LV_PART_MAIN);
+    lv_obj_set_style_border_color(nodes_box, lv_color_make(0x00, 0x33, 0x00), LV_PART_MAIN);
     lv_obj_set_style_border_width(nodes_box, 1, LV_PART_MAIN);
     lv_obj_set_style_radius(nodes_box, 4, LV_PART_MAIN);
     lv_obj_set_style_pad_all(nodes_box, 0, LV_PART_MAIN);
@@ -402,7 +402,7 @@ void nodes_screen_create()
     lv_obj_set_style_pad_row(nodes_box, 0, LV_PART_MAIN);
 
     lv_obj_t *hint = lv_label_create(nodes_screen);
-    lv_obj_set_style_text_color(hint, lv_color_make(0x44, 0x44, 0x44), LV_PART_MAIN);
+    lv_obj_set_style_text_color(hint, lv_color_make(0x00, 0x44, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(hint, &lv_font_montserrat_14, LV_PART_MAIN);
     lv_obj_set_style_text_align(hint, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     lv_label_set_text(hint, "hold: Trace/Pos/DM   swipe: nav");
@@ -416,7 +416,7 @@ void nodes_screen_create()
     trace_panel = lv_obj_create(nodes_screen);
     lv_obj_set_size(trace_panel, 340, 160);
     lv_obj_align(trace_panel, LV_ALIGN_BOTTOM_MID, 0, -40);
-    lv_obj_set_style_bg_color(trace_panel, lv_color_make(0x1A, 0x1A, 0x1A), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(trace_panel, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(trace_panel, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_border_color(trace_panel, lv_color_make(0xFF, 0x95, 0x00), LV_PART_MAIN);
     lv_obj_set_style_border_width(trace_panel, 2, LV_PART_MAIN);
@@ -430,7 +430,7 @@ void nodes_screen_create()
 
     trace_label = lv_label_create(trace_panel);
     lv_obj_set_width(trace_label, lv_pct(100));
-    lv_obj_set_style_text_color(trace_label, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(trace_label, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(trace_label, &lv_font_montserrat_14, LV_PART_MAIN);
     lv_label_set_text(trace_label, "");
     lv_label_set_long_mode(trace_label, LV_LABEL_LONG_WRAP);
@@ -467,7 +467,7 @@ void nodes_screen_create()
     action_panel = lv_obj_create(nodes_screen);
     lv_obj_set_size(action_panel, 340, 160);
     lv_obj_align(action_panel, LV_ALIGN_BOTTOM_MID, 0, -40);
-    lv_obj_set_style_bg_color(action_panel, lv_color_make(0x1A, 0x1A, 0x1A), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(action_panel, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(action_panel, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_border_color(action_panel, lv_color_make(0x58, 0x56, 0xD6), LV_PART_MAIN);
     lv_obj_set_style_border_width(action_panel, 2, LV_PART_MAIN);
@@ -480,7 +480,7 @@ void nodes_screen_create()
     lv_obj_add_flag(action_panel, LV_OBJ_FLAG_HIDDEN);
 
     action_title = lv_label_create(action_panel);
-    lv_obj_set_style_text_color(action_title, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(action_title, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(action_title, &lv_font_montserrat_16, LV_PART_MAIN);
     lv_label_set_text(action_title, "");
     lv_obj_align(action_title, LV_ALIGN_TOP_MID, 0, 0);
@@ -497,6 +497,9 @@ void nodes_screen_create()
     lv_obj_add_event_cb(btn_d, on_action_dm, LV_EVENT_CLICKED, NULL);
     lv_obj_t *lbl_d = lv_label_create(btn_d);
     lv_label_set_text(lbl_d, "DM");
+    // White: these three buttons are colour-coded by action (DM=lavender,
+    // Trace=orange, Pos=green), so a uniform white label stays readable
+    // against all three instead of vanishing on the green one.
     lv_obj_set_style_text_color(lbl_d, lv_color_white(), LV_PART_MAIN);
     lv_obj_set_style_text_font(lbl_d, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_obj_center(lbl_d);

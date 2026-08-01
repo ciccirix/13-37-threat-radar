@@ -26,11 +26,13 @@ static const char *kSpeech[4] = {
     "danger in the water!"
 };
 
-// Swim-frame geometry — must match the SD pack (gen_swim.py: 384x256 RGB565).
-#define FISH_W        384
-#define FISH_H        256
+// Swim-frame geometry — must match the SD pack. Now the FULL pwnfish clip as a
+// seamless forward loop (make_loop.py: 256x144 RGB565, 16:9, ~38 frames with a
+// crossfaded head so the loop never visibly restarts).
+#define FISH_W        256
+#define FISH_H        144
 #define FISH_BYTES    (FISH_W * FISH_H * 2)
-#define FISH_MAXF     24
+#define FISH_MAXF     64
 
 static lv_obj_t  *s_screen   = nullptr;
 static lv_obj_t  *s_fish     = nullptr;   // lv_image, src swapped per frame
@@ -64,15 +66,30 @@ static uint32_t s_last_save   = 0;
 static int level_of(long xp) { return 1 + (int)(xp / 100); }
 static int xp_into(long xp)  { return (int)(xp % 100); }
 
-// The fish grows for REAL by advancing through life-stage frames on the SD card
-// (young -> adult), NOT by scaling one image. The frames are FISH_STAGES groups
-// of FISH_PER_STAGE consecutive frames; the level picks the stage (an older,
-// differently-shaped, bigger fish) and the stage's frames cycle for the swim.
-#define FISH_STAGES     5
-#define FISH_PER_STAGE  3
-static int s_stage = 0;   // current life stage (0 = juvenile)
+// The SD swim pack (gen_swim.py) is a SINGLE continuous swim loop of frames,
+// played end-to-end in on_anim. (It used to be split into FISH_STAGES groups of
+// FISH_PER_STAGE for "growth", but the frames aren't stage-organised, so that
+// only ever cycled 3 of them and the swim looked like it was missing frames.)
 
-static void pet_wifi_noop(const WifiBeacon *b) { (void)b; }
+// Wardriving XP: the pwnfish "swims the airwaves", so each NEW WiFi network it
+// sees earns a little XP — XP then climbs anywhere there's WiFi, not only on the
+// rare handshake/peer/threat events. Deduped by BSSID; touched only on the WiFi
+// task, the count is read by on_tick on the main task.
+#define PET_NET_SEEN_MAX 96
+static uint8_t           s_net_seen[PET_NET_SEEN_MAX][6];
+static int               s_net_seen_count = 0;
+static volatile uint32_t s_nets_total = 0;
+static uint32_t          s_last_nets  = 0;
+
+static void pet_wifi_cb(const WifiBeacon *b)
+{
+    for (int i = 0; i < s_net_seen_count; i++)
+        if (memcmp(s_net_seen[i], b->bssid, 6) == 0) return;   // already counted
+    if (s_net_seen_count < PET_NET_SEEN_MAX) {
+        memcpy(s_net_seen[s_net_seen_count++], b->bssid, 6);
+        s_nets_total++;
+    }
+}
 
 static void load_xp()
 {
@@ -149,21 +166,24 @@ static void refresh()
     lv_label_set_text_fmt(s_stats, "PWND %d   friends %d   xp %ld",
         handshake_pwnd_count(), peers, s_xp);
 
-    // Real growth: the fish advances through life-stage frames (young -> adult)
-    // as the level climbs — a bigger, differently-shaped fish, not a scaled photo.
-    int lvl = level_of(s_xp);
-    int stage = (lvl - 1) / 3;                        // ~3 levels per stage
-    if (stage >= FISH_STAGES) stage = FISH_STAGES - 1;
-    if (stage < 0) stage = 0;
-    int loaded_stages = s_nframes / FISH_PER_STAGE;
-    if (loaded_stages > 0 && stage > loaded_stages - 1) stage = loaded_stages - 1;
-    if (stage != s_stage) { s_stage = stage; s_fidx = 0; s_fdir = 1; }
+    // The SD pack is a single continuous swim (not life-stage groups), so the
+    // whole loop plays in on_anim; the frame index is left alone here so the
+    // swim isn't reset every second.
 }
 
 static void on_tick(lv_timer_t *)
 {
     if (!s_active) return;
     uint32_t now = millis();
+
+    // Wardriving XP: 1.5 per new WiFi network the pwnfish has swum past. XP is an
+    // integer, so award floor(1.5 * total) incrementally (2 nets = 3 xp).
+    uint32_t nets = s_nets_total;
+    if (nets > s_last_nets) {
+        s_xp += ((long)nets * 3 / 2) - ((long)s_last_nets * 3 / 2);
+        s_last_nets = nets;
+        s_dirty = true;
+    }
 
     int peers  = pwnagotchi_peer_count();
     int threat = threatradar_top_level();
@@ -198,18 +218,18 @@ static void on_anim(lv_timer_t *)
     if (!s_active) return;
     s_phase++;
 
-    if (s_nframes >= FISH_PER_STAGE) {
-        s_fidx += s_fdir;                             // cycle within the current life stage
-        if (s_fidx >= FISH_PER_STAGE - 1) { s_fidx = FISH_PER_STAGE - 1; s_fdir = -1; }
-        else if (s_fidx <= 0)             { s_fidx = 0;                  s_fdir =  1; }
-        int idx = s_stage * FISH_PER_STAGE + s_fidx;
-        if (idx >= s_nframes) idx = s_nframes - 1;
-        lv_image_set_src(s_fish, &s_dsc[idx]);
+    // The SD pack is ONE continuous swim clip — play it forward on a loop, like
+    // a video (0->last->0). Ping-pong would replay the second half BACKWARDS,
+    // which looks like the fish swimming in reverse.
+    if (s_nframes >= 2) {
+        s_fidx++;
+        if (s_fidx >= s_nframes) s_fidx = 0;
+        lv_image_set_src(s_fish, &s_dsc[s_fidx]);
     }
 
     int dy = (int)(6.0f * sinf(s_phase * 0.16f));
     int dx = (int)(4.0f * sinf(s_phase * 0.08f));
-    lv_obj_align(s_fish, LV_ALIGN_CENTER, dx, -70 + dy);
+    lv_obj_align(s_fish, LV_ALIGN_TOP_MID, dx, 8 + dy);
 }
 
 static void on_gesture(lv_event_t *e)
@@ -218,7 +238,7 @@ static void on_gesture(lv_event_t *e)
     if (lv_indev_get_gesture_dir(indev) == LV_DIR_TOP) {
         s_active = false;
         if (s_dirty) save_xp();
-        wifi_beacon_remove(pet_wifi_noop);
+        wifi_beacon_remove(pet_wifi_cb);
         tools_screen_show();
     }
 }
@@ -231,29 +251,26 @@ void pet_screen_create()
     lv_obj_clear_flag(s_screen, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_add_event_cb(s_screen, on_gesture, LV_EVENT_GESTURE, NULL);
 
-    lv_obj_t *name = lv_label_create(s_screen);
-    lv_obj_set_style_text_font(name, &lv_font_montserrat_16, LV_PART_MAIN);
-    lv_obj_set_style_text_color(name, lv_color_make(0x33, 0xBB, 0xFF), LV_PART_MAIN);
-    lv_label_set_text(name, "1337  the pwnfish");
-    lv_obj_align(name, LV_ALIGN_TOP_MID, 0, 26);
-
-    // The fish — an image whose source is swapped each frame for the swim.
+    // The fish — an image whose source is swapped each frame for the swim. Kept
+    // in the TOP part of the screen (video-window style), stats below.
     s_fish = lv_image_create(s_screen);
     lv_image_set_src(s_fish, &fish_img);            // still fallback until frames load
-    lv_image_set_pivot(s_fish, FISH_W / 2, FISH_H / 2);
-    lv_obj_align(s_fish, LV_ALIGN_CENTER, 0, -70);
+    // Pivot at TOP-centre so the (later) scale-up grows the video down + sideways
+    // from a fixed top edge, keeping it anchored in the top band.
+    lv_image_set_pivot(s_fish, FISH_W / 2, 0);
+    lv_obj_align(s_fish, LV_ALIGN_TOP_MID, 0, 8);
 
     s_speech = lv_label_create(s_screen);
     lv_obj_set_style_text_font(s_speech, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_obj_set_style_text_color(s_speech, lv_color_make(0x7B, 0xDC, 0xFF), LV_PART_MAIN);
     lv_label_set_text(s_speech, kSpeech[PET_BORED]);
-    lv_obj_align(s_speech, LV_ALIGN_CENTER, 0, 118);
+    lv_obj_align(s_speech, LV_ALIGN_CENTER, 0, 60);
 
     s_lvl = lv_label_create(s_screen);
     lv_obj_set_style_text_font(s_lvl, &lv_font_montserrat_16, LV_PART_MAIN);
     lv_obj_set_style_text_color(s_lvl, lv_color_make(0xFF, 0x8C, 0x1A), LV_PART_MAIN);
     lv_label_set_text(s_lvl, "LVL 1");
-    lv_obj_align(s_lvl, LV_ALIGN_CENTER, -150, 150);
+    lv_obj_align(s_lvl, LV_ALIGN_CENTER, 0, 100);   // own line, centred above the bar
 
     lv_obj_t *bar_bg = lv_obj_create(s_screen);
     lv_obj_set_size(bar_bg, 300, 16);
@@ -264,7 +281,7 @@ void pet_screen_create()
     lv_obj_set_style_border_width(bar_bg, 1, LV_PART_MAIN);
     lv_obj_set_style_pad_all(bar_bg, 0, LV_PART_MAIN);
     lv_obj_clear_flag(bar_bg, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_align(bar_bg, LV_ALIGN_CENTER, 0, 152);
+    lv_obj_align(bar_bg, LV_ALIGN_CENTER, 0, 128);
 
     s_bar_fill = lv_obj_create(bar_bg);
     lv_obj_set_size(s_bar_fill, 2, 14);
@@ -280,7 +297,7 @@ void pet_screen_create()
     lv_obj_set_style_text_font(s_stats, &lv_font_montserrat_16, LV_PART_MAIN);
     lv_obj_set_style_text_color(s_stats, lv_color_make(0x8A, 0xA8, 0xBA), LV_PART_MAIN);
     lv_label_set_text(s_stats, "friends 0   xp 0");
-    lv_obj_align(s_stats, LV_ALIGN_CENTER, 0, 182);
+    lv_obj_align(s_stats, LV_ALIGN_CENTER, 0, 158);
 
     s_timer = lv_timer_create(on_tick, 1000, NULL);
     s_anim  = lv_timer_create(on_anim, 80,   NULL);
@@ -291,11 +308,16 @@ void pet_screen_show()
     if (!s_screen) pet_screen_create();
     if (!s_xp_loaded) load_xp();
     load_fish_frames();
-    if (s_nframes > 0) { s_fidx = 0; s_fdir = 1; lv_image_set_src(s_fish, &s_dsc[0]); }
+    if (s_nframes > 0) {
+        s_fidx = 0; s_fdir = 1;
+        lv_image_set_src(s_fish, &s_dsc[0]);
+        lv_image_set_scale(s_fish, 384);   // 1.5x: 256x144 -> 384x216, fills the width
+    }
     s_last_peers = pwnagotchi_peer_count();
     s_last_pwnd  = handshake_pwnd_count();
+    s_net_seen_count = 0; s_nets_total = 0; s_last_nets = 0;   // fresh wardriving tally
     s_active = true;
-    wifi_beacon_add(pet_wifi_noop);   // power the scanner so we meet peers live
+    wifi_beacon_add(pet_wifi_cb);      // power the scanner: meet peers + earn net XP
     refresh();
     lv_scr_load(s_screen);
 }

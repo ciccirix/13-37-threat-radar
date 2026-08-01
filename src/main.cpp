@@ -22,6 +22,8 @@
 #include "camera_screen.h"
 #include "deauther_screen.h"
 #include "waterfall_screen.h"
+#include "espnow_screen.h"
+#include "esp_now_link.h"
 #include "onboarding.h"
 #include "tpms_screen.h"
 #include "timezone.h"
@@ -1226,6 +1228,15 @@ void setup()
     instance.powerControl(POWER_NFC, false); // ensure NFC is off on boot
     beginLvglHelper(instance);
 
+    // The default 10 px scroll threshold is tiny on the AMOLED: a tap with a
+    // normal fingertip wobble gets read as a scroll, so the tile's CLICKED never
+    // fires and screens (Cameras, Deauth, ...) won't open — worst on the lower
+    // tiles you reach by scrolling. Raise it so a slightly-imperfect tap still
+    // counts as a click while deliberate drags still scroll.
+    for (lv_indev_t *id = lv_indev_get_next(NULL); id; id = lv_indev_get_next(id))
+        if (lv_indev_get_type(id) == LV_INDEV_TYPE_POINTER)
+            lv_indev_set_scroll_limit(id, 35);
+
     // Boot splash — the Marauder C5 "fisherman-skull" logo on black, with the
     // firmware name tucked at the bottom as a support anchor. Backlight on now so
     // it's visible; the splash stays up through the rest of setup (screen
@@ -1236,7 +1247,9 @@ void setup()
     lv_obj_set_style_border_width(boot_splash, 0, LV_PART_MAIN);
     lv_obj_t *boot_logo = lv_image_create(boot_splash);
     lv_image_set_src(boot_logo, &boot_skull_img);
-    lv_obj_align(boot_logo, LV_ALIGN_CENTER, 0, -16);   // nudged up to leave room for the name
+    lv_image_set_pivot(boot_logo, 120, 120);            // centre of the 240x240 art
+    lv_image_set_scale(boot_logo, 384);                 // 1.5x -> ~360 px, fills the AMOLED
+    lv_obj_align(boot_logo, LV_ALIGN_CENTER, 0, -24);   // nudged up to leave room for the name
     lv_obj_t *boot_brand = lv_label_create(boot_splash);
     lv_label_set_text(boot_brand, FW_NAME);
     lv_obj_set_style_text_color(boot_brand, lv_color_white(), LV_PART_MAIN);
@@ -1588,6 +1601,7 @@ void setup()
     settings_screen_create();
     stealth_load();   // restore duress state before the Tools tile reads `armed`
     tools_screen_create();
+    espnow_screen_create();
     threat_radar_screen_create();
     pet_screen_create();
     tpms_screen_create();
@@ -1838,6 +1852,10 @@ void loop()
         // Outside the USB-SD gate: only reads the radar store + GATT posts,
         // never touches the filesystem — the phone keeps updating either way.
         phone_link_bg_tick();
+        // ESP-NOW out-of-mesh link: drains RX frames, ages peers, and emits the
+        // presence beacon. No-op unless the link is switched on; never touches
+        // the filesystem, so it stays outside the USB-SD gate.
+        esp_now_link_bg_tick();
     }
     // Yield to LVGL between SD-heavy batches. The display uses partial
     // refresh with ~6 tiles per screen, one tile per lv_task_handler call;

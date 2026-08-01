@@ -19,6 +19,8 @@
 #include "camera_screen.h"
 #include "deauther_screen.h"
 #include "waterfall_screen.h"
+#include "espnow_screen.h"
+#include "garage.h"
 #include <LilyGoLib.h>
 
 // Defined in main.cpp
@@ -33,13 +35,26 @@ static lv_obj_t *t_eviltwin;  // referenced by on_eviltwin_clicked for colour sw
 static lv_obj_t *t_flock;     // referenced by on_flock_clicked for colour swap
 static lv_obj_t *t_duress;    // referenced by on_duress_clicked for colour swap
 static lv_obj_t *t_handshake; // referenced by on_handshake_clicked for colour swap
+static lv_obj_t *s_tools_grid = nullptr; // the scrollable tile grid, for on_gesture
 
 static void on_gesture(lv_event_t *e)
 {
     lv_indev_t *indev = lv_event_get_indev(e);
     lv_dir_t dir = lv_indev_get_gesture_dir(indev);
-    if (dir == LV_DIR_TOP)
-        clock_screen_show();
+
+    // The tile grid scrolls vertically and holds far more tiles than fit on one
+    // screen, so an up/down swipe normally means "scroll to more tiles". Only
+    // treat the swipe as "leave the Tools screen" when the grid is already at
+    // the matching edge (nothing more to reveal that way). Otherwise every
+    // upward flick would exit to the clock and the lower tiles (Cameras,
+    // Deauth, Waterfall, ESP-NOW) would be unreachable.
+    if (dir == LV_DIR_TOP) {
+        if (!s_tools_grid || lv_obj_get_scroll_bottom(s_tools_grid) <= 4)
+            clock_screen_show();
+    } else if (dir == LV_DIR_BOTTOM) {
+        if (s_tools_grid && lv_obj_get_scroll_top(s_tools_grid) <= 4)
+            clock_screen_show();
+    }
 }
 
 static void set_airtag_tile_running(bool running)
@@ -181,9 +196,9 @@ static lv_obj_t *make_tile(lv_obj_t *parent, const char *label_text)
 {
     lv_obj_t *tile = lv_obj_create(parent);
     lv_obj_set_size(tile, 180, 180);
-    lv_obj_set_style_bg_color(tile, lv_color_make(0x11, 0x11, 0x11), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(tile, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(tile, LV_OPA_COVER, LV_PART_MAIN);
-    lv_obj_set_style_border_color(tile, lv_color_make(0x44, 0x44, 0x44), LV_PART_MAIN);
+    lv_obj_set_style_border_color(tile, lv_color_make(0x00, 0x44, 0x00), LV_PART_MAIN);
     lv_obj_set_style_border_width(tile, 1, LV_PART_MAIN);
     lv_obj_set_style_radius(tile, 14, LV_PART_MAIN);
     lv_obj_set_style_pad_all(tile, 0, LV_PART_MAIN);
@@ -191,12 +206,90 @@ static lv_obj_t *make_tile(lv_obj_t *parent, const char *label_text)
     lv_obj_add_flag(tile, LV_OBJ_FLAG_CLICKABLE);
 
     lv_obj_t *lbl = lv_label_create(tile);
-    lv_obj_set_style_text_color(lbl, lv_color_make(0xCC, 0xCC, 0xCC), LV_PART_MAIN);
+    lv_obj_set_style_text_color(lbl, lv_color_make(0x00, 0xCC, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(lbl, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_label_set_text(lbl, label_text);
     lv_obj_align(lbl, LV_ALIGN_BOTTOM_MID, 0, -12);
 
     return tile;
+}
+
+// Make an icon and all its nested parts transparent to touch, so a tap anywhere
+// on a tile reaches the tile's own CLICKED handler instead of being eaten by a
+// decorative child shape.
+static void tile_icons_passthrough(lv_obj_t *obj)
+{
+    for (uint32_t i = 0; i < lv_obj_get_child_count(obj); i++) {
+        lv_obj_t *c = lv_obj_get_child(obj, i);
+        lv_obj_clear_flag(c, LV_OBJ_FLAG_CLICKABLE);
+        tile_icons_passthrough(c);
+    }
+}
+
+// Cancello (garage) — a roll-up door with horizontal slats and two little RF
+// waves rising off the top, for the 433 MHz gate-remote transmit tile.
+static void draw_garage_icon(lv_obj_t *tile)
+{
+    lv_color_t door = lv_color_make(0x55, 0x55, 0x55);
+    lv_color_t edge = lv_color_make(0x99, 0x99, 0x99);
+    lv_color_t slat = lv_color_make(0x22, 0x22, 0x22);
+    lv_color_t wave = lv_color_make(0xFF, 0xAA, 0x33);
+
+    lv_obj_t *d = lv_obj_create(tile);
+    lv_obj_set_size(d, 96, 74);
+    lv_obj_set_style_radius(d, 4, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(d, door, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(d, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_border_color(d, edge, LV_PART_MAIN);
+    lv_obj_set_style_border_width(d, 3, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(d, 0, LV_PART_MAIN);
+    lv_obj_clear_flag(d, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_align(d, LV_ALIGN_TOP_MID, 0, 62);
+
+    for (int i = 0; i < 3; i++) {
+        lv_obj_t *s = lv_obj_create(d);
+        lv_obj_set_size(s, 84, 2);
+        lv_obj_set_style_bg_color(s, slat, LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(s, LV_OPA_COVER, LV_PART_MAIN);
+        lv_obj_set_style_border_width(s, 0, LV_PART_MAIN);
+        lv_obj_set_style_pad_all(s, 0, LV_PART_MAIN);
+        lv_obj_clear_flag(s, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_align(s, LV_ALIGN_TOP_MID, 0, 16 + i * 18);
+    }
+
+    // two RF waves rising from the top-right corner
+    for (int i = 0; i < 2; i++) {
+        lv_obj_t *w = lv_obj_create(tile);
+        lv_obj_set_size(w, 4 + i * 10, 4 + i * 10);
+        lv_obj_set_style_radius(w, LV_RADIUS_CIRCLE, LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(w, LV_OPA_TRANSP, LV_PART_MAIN);
+        lv_obj_set_style_border_color(w, wave, LV_PART_MAIN);
+        lv_obj_set_style_border_width(w, 2, LV_PART_MAIN);
+        lv_obj_set_style_pad_all(w, 0, LV_PART_MAIN);
+        lv_obj_clear_flag(w, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_align(w, LV_ALIGN_TOP_MID, 44, 44 - i * 6);
+    }
+}
+
+// Cancello tap feedback: light the tile amber + buzz so it's obvious the code is
+// going out, transmit (~0.5 s, blocking), then a short green "sent" (or red
+// "busy/failed") flash before returning to normal. lv_refr_now paints the amber
+// BEFORE the blocking transmit so the flash is actually visible.
+static void on_garage_clicked(lv_event_t *e)
+{
+    lv_obj_t *tile = (lv_obj_t *)lv_event_get_current_target(e);
+    lv_obj_set_style_bg_color(tile, lv_color_make(0xFF, 0xAA, 0x33), LV_PART_MAIN);
+    lv_refr_now(NULL);
+    instance.vibrator();
+
+    bool ok = garage_transmit();
+
+    lv_obj_set_style_bg_color(tile, ok ? lv_color_make(0x00, 0x88, 0x33)
+                                       : lv_color_make(0x88, 0x00, 0x00), LV_PART_MAIN);
+    lv_refr_now(NULL);
+    delay(250);
+    lv_obj_set_style_bg_color(tile, lv_color_black(), LV_PART_MAIN);
+    lv_refr_now(NULL);
 }
 
 // Upper-left: WiFi — signal glyph in cyan, for the site-survey / ping-sweep tool
@@ -1188,6 +1281,36 @@ static void draw_waterfall_icon(lv_obj_t *tile)
     }
 }
 
+// ESP-NOW — two peer nodes joined by a link, in the same teal the ESP-NOW
+// screen uses. Conveys "two devices talking directly" at a glance.
+static void draw_espnow_icon(lv_obj_t *tile)
+{
+    lv_color_t teal = lv_color_make(0x33, 0xDD, 0xAA);
+    int cy = 78;
+    // Left + right nodes.
+    for (int i = 0; i < 2; i++) {
+        lv_obj_t *node = lv_obj_create(tile);
+        lv_obj_set_size(node, 34, 34);
+        lv_obj_set_style_radius(node, 8, LV_PART_MAIN);
+        lv_obj_set_style_bg_color(node, teal, LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(node, LV_OPA_COVER, LV_PART_MAIN);
+        lv_obj_set_style_border_width(node, 0, LV_PART_MAIN);
+        lv_obj_set_style_pad_all(node, 0, LV_PART_MAIN);
+        lv_obj_clear_flag(node, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_align(node, LV_ALIGN_TOP_MID, i == 0 ? -46 : 46, cy);
+    }
+    // Link bar between them.
+    lv_obj_t *link = lv_obj_create(tile);
+    lv_obj_set_size(link, 58, 8);
+    lv_obj_set_style_radius(link, 4, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(link, teal, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(link, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_border_width(link, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(link, 0, LV_PART_MAIN);
+    lv_obj_clear_flag(link, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_align(link, LV_ALIGN_TOP_MID, 0, cy + 13);
+}
+
 void tools_screen_create()
 {
     tools_screen = lv_obj_create(NULL);
@@ -1196,7 +1319,7 @@ void tools_screen_create()
 
     // Title
     lv_obj_t *title = lv_label_create(tools_screen);
-    lv_obj_set_style_text_color(title, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(title, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(title, &lv_font_montserrat_28, LV_PART_MAIN);
     lv_label_set_text(title, "TOOLS");
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 8);
@@ -1205,6 +1328,7 @@ void tools_screen_create()
     // 180px tile + the 12px column gap exceeds half the 384px inner width),
     // and the container scrolls vertically when future tiles overflow.
     lv_obj_t *grid = lv_obj_create(tools_screen);
+    s_tools_grid = grid;   // remembered so on_gesture can query the scroll edges
     lv_obj_set_size(grid, 400, 432);
     lv_obj_align(grid, LV_ALIGN_TOP_MID, 0, 52);
     lv_obj_set_style_bg_color(grid, lv_color_black(), LV_PART_MAIN);
@@ -1252,6 +1376,8 @@ void tools_screen_create()
     lv_obj_t *t_cameras = make_tile(grid, "Cameras");
     lv_obj_t *t_deauth  = make_tile(grid, "Deauth");
     lv_obj_t *t_waterfall = make_tile(grid, "Waterfall");
+    lv_obj_t *t_espnow  = make_tile(grid, "ESP-NOW");
+    lv_obj_t *t_garage  = make_tile(grid, "Cancello");
 
     draw_wifi_icon(t_wifi);
     draw_analyzer_icon(t_analyze);
@@ -1273,6 +1399,8 @@ void tools_screen_create()
     draw_camera_scan_icon(t_cameras);
     draw_deauth_icon(t_deauth);
     draw_waterfall_icon(t_waterfall);
+    draw_espnow_icon(t_espnow);
+    draw_garage_icon(t_garage);
 
     // Tesla CP tile opens the 315 MHz charge-port-open transmit screen.
     lv_obj_add_event_cb(t_tesla, [](lv_event_t *) { tesla_cp_screen_show(); }, LV_EVENT_CLICKED, NULL);
@@ -1344,20 +1472,22 @@ void tools_screen_create()
     // Waterfall tile opens the FFT band analyzer (identical to the Marauder C5).
     lv_obj_add_event_cb(t_waterfall, [](lv_event_t *) { waterfall_screen_show(); }, LV_EVENT_CLICKED, NULL);
 
-    // lv_obj_create() creates objects with LV_OBJ_FLAG_CLICKABLE set by
-    // default, so the icon shapes inside each tile would otherwise swallow
-    // CLICKED events instead of letting them reach the tile. Walk every tile
-    // and add LV_OBJ_FLAG_EVENT_BUBBLE to each of its children so a tap
-    // anywhere inside the tile (icon shapes, label, or background) reaches
-    // the tile's CLICKED handler.
-    uint32_t tile_count = lv_obj_get_child_count(grid);
-    for (uint32_t i = 0; i < tile_count; i++) {
-        lv_obj_t *tile = lv_obj_get_child(grid, i);
-        uint32_t kid_count = lv_obj_get_child_count(tile);
-        for (uint32_t j = 0; j < kid_count; j++) {
-            lv_obj_add_flag(lv_obj_get_child(tile, j), LV_OBJ_FLAG_EVENT_BUBBLE);
-        }
-    }
+    // ESP-NOW tile opens the out-of-mesh device-to-device messaging screen.
+    lv_obj_add_event_cb(t_espnow, [](lv_event_t *) { espnow_screen_show(); }, LV_EVENT_CLICKED, NULL);
+
+    // Cancello tile fires the garage/gate remote code once (433 MHz OOK), with
+    // an amber-flash + buzz so it's clear the transmit happened.
+    lv_obj_add_event_cb(t_garage, on_garage_clicked, LV_EVENT_CLICKED, NULL);
+
+    // lv_obj_create() makes objects LV_OBJ_FLAG_CLICKABLE by default, so the
+    // icon shapes filling each tile's centre would otherwise become the touch
+    // target and swallow the tap (the tile's CLICKED handler never runs). Make
+    // every decorative descendant non-clickable so the input device targets the
+    // tile itself no matter where inside it you press. Recursive in case an icon
+    // nests its parts. (More robust than EVENT_BUBBLE: with the shapes taken out
+    // of hit-testing, both the tap and the scroll grab land on the tile/grid.)
+    for (uint32_t i = 0; i < lv_obj_get_child_count(grid); i++)
+        tile_icons_passthrough(lv_obj_get_child(grid, i));
 
     lv_obj_add_event_cb(tools_screen, on_gesture, LV_EVENT_GESTURE, NULL);
 }

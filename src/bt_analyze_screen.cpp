@@ -190,7 +190,7 @@ static void refresh()
             lv_obj_set_style_bg_color(bars[i], bucket_colour(i), LV_PART_MAIN);
             lv_obj_set_style_bg_opa(bars[i], LV_OPA_COVER, LV_PART_MAIN);
         } else {
-            lv_obj_set_style_bg_color(bars[i], lv_color_make(0x33, 0x33, 0x33), LV_PART_MAIN);
+            lv_obj_set_style_bg_color(bars[i], lv_color_black(), LV_PART_MAIN);
             lv_obj_set_style_bg_opa(bars[i], LV_OPA_70, LV_PART_MAIN);
         }
     }
@@ -241,7 +241,7 @@ void bt_analyze_screen_create()
     lv_obj_set_style_pad_all(screen, 0, LV_PART_MAIN);
 
     title_label = lv_label_create(screen);
-    lv_obj_set_style_text_color(title_label, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(title_label, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(title_label, &lv_font_montserrat_48, LV_PART_MAIN);
     lv_label_set_text(title_label, "Bluetooth");
     // Anchored at the top centre to match the PAGER / TPMS / SETTINGS
@@ -250,13 +250,13 @@ void bt_analyze_screen_create()
     lv_obj_align(title_label, LV_ALIGN_TOP_MID, 0, 8);
 
     status_label = lv_label_create(screen);
-    lv_obj_set_style_text_color(status_label, lv_color_make(0xCC, 0xCC, 0xCC), LV_PART_MAIN);
+    lv_obj_set_style_text_color(status_label, lv_color_make(0x00, 0xCC, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(status_label, &lv_font_montserrat_14, LV_PART_MAIN);
     lv_label_set_text(status_label, "starting...");
     lv_obj_align(status_label, LV_ALIGN_TOP_MID, 0, 88);
 
     legend_label = lv_label_create(screen);
-    lv_obj_set_style_text_color(legend_label, lv_color_make(0x88, 0x88, 0x88), LV_PART_MAIN);
+    lv_obj_set_style_text_color(legend_label, lv_color_make(0x00, 0x88, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(legend_label, &lv_font_montserrat_14, LV_PART_MAIN);
     lv_label_set_text(legend_label, "");
     lv_obj_align(legend_label, LV_ALIGN_TOP_MID, 0, 108);
@@ -274,7 +274,7 @@ void bt_analyze_screen_create()
 
         bars[i] = lv_obj_create(screen);
         lv_obj_set_size(bars[i], BAR_W, 2);
-        lv_obj_set_style_bg_color(bars[i], lv_color_make(0x33, 0x33, 0x33), LV_PART_MAIN);
+        lv_obj_set_style_bg_color(bars[i], lv_color_black(), LV_PART_MAIN);
         lv_obj_set_style_bg_opa(bars[i], LV_OPA_70, LV_PART_MAIN);
         lv_obj_set_style_radius(bars[i], 3, LV_PART_MAIN);
         lv_obj_set_style_pad_all(bars[i], 0, LV_PART_MAIN);
@@ -283,7 +283,7 @@ void bt_analyze_screen_create()
         lv_obj_set_pos(bars[i], x, CHART_BOTTOM_Y - 2);
 
         bucket_labels[i] = lv_label_create(screen);
-        lv_obj_set_style_text_color(bucket_labels[i], lv_color_make(0xAA, 0xAA, 0xAA), LV_PART_MAIN);
+        lv_obj_set_style_text_color(bucket_labels[i], lv_color_make(0x00, 0xAA, 0x00), LV_PART_MAIN);
         lv_obj_set_style_text_font(bucket_labels[i], &lv_font_montserrat_14, LV_PART_MAIN);
         lv_label_set_text(bucket_labels[i], bucket_text[i]);
         lv_obj_set_pos(bucket_labels[i], x + (BAR_W - 22) / 2, CHART_BOTTOM_Y + 4);
@@ -291,7 +291,7 @@ void bt_analyze_screen_create()
 
     lv_obj_t *base = lv_obj_create(screen);
     lv_obj_set_size(base, total_w, 1);
-    lv_obj_set_style_bg_color(base, lv_color_make(0x44, 0x44, 0x44), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(base, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(base, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_border_width(base, 0, LV_PART_MAIN);
     lv_obj_set_style_pad_all(base, 0, LV_PART_MAIN);
@@ -299,7 +299,7 @@ void bt_analyze_screen_create()
     lv_obj_set_pos(base, start_x, CHART_BOTTOM_Y);
 
     lv_obj_t *axis_hint = lv_label_create(screen);
-    lv_obj_set_style_text_color(axis_hint, lv_color_make(0x66, 0x66, 0x66), LV_PART_MAIN);
+    lv_obj_set_style_text_color(axis_hint, lv_color_make(0x00, 0x66, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(axis_hint, &lv_font_montserrat_14, LV_PART_MAIN);
     lv_label_set_text(axis_hint, "RSSI (dBm) - closer is stronger");
     // Bottom of visible circle is at y≈456; pull the hint up so the

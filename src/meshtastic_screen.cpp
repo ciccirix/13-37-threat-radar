@@ -137,7 +137,7 @@ static void make_message_entry(lv_obj_t *parent, const MeshMessage *msg, int idx
         lv_obj_set_style_border_width(entry, 3, LV_PART_MAIN);
     } else {
         lv_obj_set_style_border_side(entry, LV_BORDER_SIDE_BOTTOM, LV_PART_MAIN);
-        lv_obj_set_style_border_color(entry, lv_color_make(0x33, 0x33, 0x33), LV_PART_MAIN);
+        lv_obj_set_style_border_color(entry, lv_color_make(0x00, 0x33, 0x00), LV_PART_MAIN);
         lv_obj_set_style_border_width(entry, 1, LV_PART_MAIN);
     }
     lv_obj_set_style_pad_all(entry, 8, LV_PART_MAIN);
@@ -166,7 +166,7 @@ static void make_message_entry(lv_obj_t *parent, const MeshMessage *msg, int idx
     // Message text (white, normal)
     lv_obj_t *txt = lv_label_create(entry);
     lv_obj_set_width(txt, lv_pct(100));
-    lv_obj_set_style_text_color(txt, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(txt, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(txt, &lv_font_montserrat_16, LV_PART_MAIN);
     lv_label_set_text(txt, msg->text);
     lv_label_set_long_mode(txt, LV_LABEL_LONG_WRAP);
@@ -192,7 +192,7 @@ static void make_message_entry(lv_obj_t *parent, const MeshMessage *msg, int idx
         }
         lv_obj_t *q = lv_label_create(entry);
         lv_obj_set_width(q, lv_pct(100));
-        lv_obj_set_style_text_color(q, lv_color_make(0x66, 0x66, 0x66), LV_PART_MAIN);
+        lv_obj_set_style_text_color(q, lv_color_make(0x00, 0x66, 0x00), LV_PART_MAIN);
         lv_obj_set_style_text_font(q, &lv_font_montserrat_14, LV_PART_MAIN);
         lv_label_set_text(q, qual);
         lv_label_set_long_mode(q, LV_LABEL_LONG_DOT);
@@ -206,7 +206,7 @@ static void rebuild_list()
     if (count == 0) {
         lv_obj_t *lbl = lv_label_create(msg_list);
         lv_obj_add_flag(lbl, LV_OBJ_FLAG_FLOATING);  // exclude from flex layout so center works
-        lv_obj_set_style_text_color(lbl, lv_color_make(0x55, 0x55, 0x55), LV_PART_MAIN);
+        lv_obj_set_style_text_color(lbl, lv_color_make(0x00, 0x55, 0x00), LV_PART_MAIN);
         lv_obj_set_style_text_font(lbl, &lv_font_montserrat_16, LV_PART_MAIN);
         lv_label_set_text(lbl, "No messages yet.");
         lv_obj_center(lbl);
@@ -266,7 +266,7 @@ void meshtastic_screen_create()
     // Title — font_montserrat_48 (~60 px tall) at y=21 (5 px lower
     // than the previous y=16 for a touch more bezel clearance).
     lv_obj_t *title = lv_label_create(mesh_screen);
-    lv_obj_set_style_text_color(title, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(title, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(title, &lv_font_montserrat_48, LV_PART_MAIN);
     lv_label_set_text(title, "MESHTASTIC");
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 21);
@@ -277,7 +277,7 @@ void meshtastic_screen_create()
     lv_obj_set_size(msg_list, 360, 340);
     lv_obj_align(msg_list, LV_ALIGN_TOP_MID, 0, 87);
     lv_obj_set_style_bg_color(msg_list, lv_color_black(), LV_PART_MAIN);
-    lv_obj_set_style_border_color(msg_list, lv_color_make(0x33, 0x33, 0x33), LV_PART_MAIN);
+    lv_obj_set_style_border_color(msg_list, lv_color_make(0x00, 0x33, 0x00), LV_PART_MAIN);
     lv_obj_set_style_border_width(msg_list, 1, LV_PART_MAIN);
     lv_obj_set_style_radius(msg_list, 4, LV_PART_MAIN);
     lv_obj_set_style_pad_all(msg_list, 0, LV_PART_MAIN);
@@ -304,7 +304,7 @@ void meshtastic_screen_create()
     lv_obj_add_flag(clear_link, LV_OBJ_FLAG_HIDDEN);
 
     lv_obj_t *hint = lv_label_create(mesh_screen);
-    lv_obj_set_style_text_color(hint, lv_color_make(0x44, 0x44, 0x44), LV_PART_MAIN);
+    lv_obj_set_style_text_color(hint, lv_color_make(0x00, 0x44, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(hint, &lv_font_montserrat_14, LV_PART_MAIN);
     lv_obj_set_style_text_align(hint, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     lv_label_set_text(hint, "Tap: reply   hold: delete   swipe: nav");
@@ -331,17 +331,17 @@ void meshtastic_screen_create()
     lv_obj_t *confirm_panel = lv_obj_create(confirm_overlay);
     lv_obj_set_size(confirm_panel, 340, 260);
     lv_obj_align(confirm_panel, LV_ALIGN_CENTER, 0, 0);
-    lv_obj_set_style_bg_color(confirm_panel, lv_color_make(0x1C, 0x1C, 0x1E), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(confirm_panel, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_bg_opa(confirm_panel, LV_OPA_COVER, LV_PART_MAIN);
     lv_obj_set_style_radius(confirm_panel, 16, LV_PART_MAIN);
-    lv_obj_set_style_border_color(confirm_panel, lv_color_make(0x44, 0x44, 0x48), LV_PART_MAIN);
+    lv_obj_set_style_border_color(confirm_panel, lv_color_make(0x00, 0x48, 0x00), LV_PART_MAIN);
     lv_obj_set_style_border_width(confirm_panel, 1, LV_PART_MAIN);
     lv_obj_set_style_pad_all(confirm_panel, 16, LV_PART_MAIN);
     lv_obj_add_flag(confirm_panel, LV_OBJ_FLAG_CLICKABLE);  // swallow backdrop taps
 
     confirm_text = lv_label_create(confirm_panel);
     lv_obj_set_width(confirm_text, lv_pct(100));
-    lv_obj_set_style_text_color(confirm_text, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(confirm_text, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(confirm_text, &lv_font_montserrat_14, LV_PART_MAIN);
     lv_obj_set_style_text_align(confirm_text, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     lv_label_set_text(confirm_text, "Delete this message?");
@@ -352,11 +352,11 @@ void meshtastic_screen_create()
     lv_obj_set_size(cancel_btn, 140, 56);
     lv_obj_align(cancel_btn, LV_ALIGN_BOTTOM_LEFT, 0, 0);
     lv_obj_set_style_radius(cancel_btn, 10, LV_PART_MAIN);
-    lv_obj_set_style_bg_color(cancel_btn, lv_color_make(0x3A, 0x3A, 0x3C), LV_PART_MAIN);
+    lv_obj_set_style_bg_color(cancel_btn, lv_color_black(), LV_PART_MAIN);
     lv_obj_add_event_cb(cancel_btn, on_confirm_cancel, LV_EVENT_CLICKED, NULL);
     lv_obj_t *cl = lv_label_create(cancel_btn);
     lv_label_set_text(cl, "Cancel");
-    lv_obj_set_style_text_color(cl, lv_color_white(), LV_PART_MAIN);
+    lv_obj_set_style_text_color(cl, lv_color_make(0x00, 0xFF, 0x00), LV_PART_MAIN);
     lv_obj_set_style_text_font(cl, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_obj_center(cl);
 
@@ -368,6 +368,7 @@ void meshtastic_screen_create()
     lv_obj_add_event_cb(del_btn, on_confirm_delete, LV_EVENT_CLICKED, NULL);
     lv_obj_t *dl = lv_label_create(del_btn);
     lv_label_set_text(dl, "Delete");
+    // White: sits on the button's red bg, not the theme green.
     lv_obj_set_style_text_color(dl, lv_color_white(), LV_PART_MAIN);
     lv_obj_set_style_text_font(dl, &lv_font_montserrat_20, LV_PART_MAIN);
     lv_obj_center(dl);
