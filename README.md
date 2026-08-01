@@ -24,13 +24,13 @@
 ---
 ## 🐠 pwnpet — *this fork's addition*
 
-A Tamagotchi-style **goldfish** that swims the airwaves. It meets nearby Pwnagotchi units over their `DE:AD:BE:EF:DE:AD` advertisement beacons (so it greets your real Pi), turns wary when Threat Radar spots a tail, and — with passive capture armed from the **Pwn** tile — *eats* the WPA handshakes / PMKIDs it catches, logging them to `/pwn/<ts>.pcap` for offline cracking (`hashcat -m 22000`). Level, XP and friends-met persist to the SD card. Strictly passive — no deauth — and for authorized testing only.
+A Tamagotchi-style **goldfish** that swims the airwaves. It meets nearby Pwnagotchi units over their `DE:AD:BE:EF:DE:AD` advertisement beacons (so it greets your real Pi), turns wary when Threat Radar spots a tail, and — with passive capture armed from the **Pwn** tile — *eats* the WPA handshakes / PMKIDs it catches, logging them to `/pwn/<ts>.pcap` for offline cracking (`hashcat -m 22000`). XP climbs from the WiFi networks it swims past, the handshakes it eats, and the Pwnagotchi friends it meets; level, XP and friends-met persist to the SD card. Strictly passive — no deauth — and for authorized testing only.
 
-| pwnpet | grows with XP |
+| pwnpet | seamless swim loop |
 | :---: | :---: |
-| <img src="img/pwnpet.png" width="230" alt="pwnpet real goldfish screen"> | <img src="img/pwnpet_growth.gif" width="230" alt="the pwnfish growing with XP"> |
+| <img src="img/pwnpet.png" width="230" alt="pwnpet goldfish screen"> | <img src="img/pwnpet_loop.gif" width="230" alt="the pwnfish swimming in a seamless loop"> |
 
-> Real goldfish rendered at the watch's native 410×502 — the on-device pet swims (frames streamed from the SD card) and physically grows with XP.
+> Real goldfish clip played on the watch — the on-device pet runs the full video as a seamless forward loop (frames loaded from the SD card) filling the top of the screen, while XP ticks up from the networks it swims through.
 
 ---
 ## Purchase
