@@ -103,13 +103,20 @@ static void sweep_task(void *)
             esp_ping_delete_session(hdl);
         }
 
-        if (s_cur_alive && s_device_count < PINGSWEEP_MAX_DEVICES) {
-            PingDevice dev;
-            memset(&dev, 0, sizeof(dev));
-            dev.ip = ((uint32_t)s_net_a << 24) | ((uint32_t)s_net_b << 16)
-                   | ((uint32_t)s_net_c << 8)  | (uint32_t)d;
-            dev.rtt_ms = s_cur_rtt;
-            lookup_mac(s_net_a, s_net_b, s_net_c, (uint8_t)d, &dev);
+        // Sending the ping forces an ARP resolution first: to emit the ICMP
+        // echo, lwIP must learn the target's MAC, and EVERY host on the segment
+        // must answer ARP (it's mandatory L2) even if it silently drops ICMP —
+        // as IP cameras and lots of IoT gear do. So a host counts as alive if it
+        // answered ICMP OR left a fresh entry in the ARP cache. This is what
+        // makes silent cameras (e.g. 192.168.1.11) show up instead of the 2-3
+        // devices that bother to reply to ping.
+        PingDevice dev;
+        memset(&dev, 0, sizeof(dev));
+        dev.ip = ((uint32_t)s_net_a << 24) | ((uint32_t)s_net_b << 16)
+               | ((uint32_t)s_net_c << 8)  | (uint32_t)d;
+        dev.rtt_ms = s_cur_rtt;   // 0 for ARP-only hosts (no ICMP round-trip)
+        lookup_mac(s_net_a, s_net_b, s_net_c, (uint8_t)d, &dev);
+        if ((s_cur_alive || dev.has_mac) && s_device_count < PINGSWEEP_MAX_DEVICES) {
             s_devices[s_device_count] = dev;
             s_device_count = s_device_count + 1;   // publish last (UI reads count)
         }

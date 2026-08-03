@@ -37,6 +37,8 @@ static const uint32_t FLOCK_OUIS[] = {
     0x381D14,
     // Meta/Ray-Ban (57–61)
     0x7C2A9E, 0xCC660A, 0xF40343, 0x5CE91E, 0x985949,
+    // IP camera — user's own device (MAC cc:b8:5e:88:fa:9d) (62)
+    0xCCB85E,
 };
 #define FLOCK_OUI_COUNT (int)(sizeof(FLOCK_OUIS) / sizeof(FLOCK_OUIS[0]))
 
@@ -48,7 +50,8 @@ static const char *oui_to_vendor(int idx)
     if (idx <= 50)  return "DJI";
     if (idx <= 55)  return "Parrot";
     if (idx == 56)  return "Skydio";
-    return "Meta/Ray-Ban";
+    if (idx <= 61)  return "Meta/Ray-Ban";
+    return "IP Camera";
 }
 
 // Device-name patterns. Matched case-sensitively as a PREFIX of the broadcast

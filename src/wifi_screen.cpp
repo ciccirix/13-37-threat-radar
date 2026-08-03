@@ -2,6 +2,7 @@
 #include "pingsweep.h"
 #include "hostresolve.h"
 #include "portscan_screen.h"
+#include "wifi_creds.h"
 #include <LilyGoLib.h>
 #include <WiFi.h>
 #include <string.h>
@@ -325,8 +326,17 @@ static void exit_password_mode()
     lv_obj_clear_flag(list_box, LV_OBJ_FLAG_HIDDEN);
 }
 
+// Remember what we're connecting to so we can persist it once it succeeds.
+static char s_conn_ssid[33] = {0};
+static char s_conn_pass[64] = {0};
+
 static void begin_connect(const char *ssid, const char *pass)
 {
+    strncpy(s_conn_ssid, ssid ? ssid : "", sizeof(s_conn_ssid) - 1);
+    s_conn_ssid[sizeof(s_conn_ssid) - 1] = '\0';
+    strncpy(s_conn_pass, pass ? pass : "", sizeof(s_conn_pass) - 1);
+    s_conn_pass[sizeof(s_conn_pass) - 1] = '\0';
+
     WiFi.mode(WIFI_STA);
     if (pass && pass[0]) WiFi.begin(ssid, pass);
     else                 WiFi.begin(ssid);
@@ -339,8 +349,11 @@ static void on_net_clicked(lv_event_t *e)
     int idx = (int)(intptr_t)lv_event_get_user_data(e);
     if (idx < 0 || idx >= s_net_count) return;
     s_pending = idx;
+    char known_pass[64];
     if (s_nets[idx].open) {
         begin_connect(s_nets[idx].ssid, nullptr);
+    } else if (wifi_creds_pass_for(s_nets[idx].ssid, known_pass, sizeof(known_pass))) {
+        begin_connect(s_nets[idx].ssid, known_pass);   // remembered — no keyboard
     } else {
         s_state = WST_PASSWORD;
         enter_password_mode();
@@ -423,6 +436,7 @@ static void on_refresh(lv_timer_t *)
     case WST_CONNECTING:
         if (WiFi.status() == WL_CONNECTED) {
             s_state = WST_CONNECTED;
+            wifi_creds_save(s_conn_ssid, s_conn_pass);   // remember for one-tap next time
             s_shown_dev = -1;
             show_devices();
         } else if (millis() - s_connect_start > 15000) {
@@ -480,6 +494,16 @@ static lv_obj_t *make_button(lv_obj_t *parent, lv_coord_t w, lv_coord_t h,
     return b;
 }
 
+// AUTO switch — toggles whether the watch reconnects to the remembered WiFi at
+// boot. OFF keeps the radio free for the Scanner/Wardriver (promiscuous hopping).
+static void on_auto_switch(lv_event_t *e)
+{
+    lv_obj_t *sw = (lv_obj_t *)lv_event_get_target(e);
+    bool on = lv_obj_has_state(sw, LV_STATE_CHECKED);
+    wifi_creds_set_autoconnect(on);
+    if (on) wifi_creds_autoconnect();   // connect right away when enabling
+}
+
 void wifi_screen_create()
 {
     wifi_screen = lv_obj_create(NULL);
@@ -493,6 +517,21 @@ void wifi_screen_create()
     lv_obj_set_style_text_font(title, &lv_font_montserrat_48, LV_PART_MAIN);
     lv_label_set_text(title, "WiFi");
     lv_obj_align(title, LV_ALIGN_TOP_MID, 0, 10);
+
+    // AUTO-connect switch — bottom-centre (the corners are under the rounded
+    // bezel and can't be tapped). "AUTO WiFi" label to the left of the switch.
+    lv_obj_t *auto_lbl = lv_label_create(wifi_screen);
+    lv_obj_set_style_text_font(auto_lbl, &lv_font_montserrat_16, LV_PART_MAIN);
+    lv_obj_set_style_text_color(auto_lbl, lv_color_make(0xAA, 0xAA, 0xAA), LV_PART_MAIN);
+    lv_label_set_text(auto_lbl, "AUTO WiFi");
+    lv_obj_align(auto_lbl, LV_ALIGN_BOTTOM_MID, -46, -20);
+
+    lv_obj_t *auto_sw = lv_switch_create(wifi_screen);
+    lv_obj_set_size(auto_sw, 56, 28);
+    lv_obj_align(auto_sw, LV_ALIGN_BOTTOM_MID, 40, -18);
+    lv_obj_set_style_bg_color(auto_sw, lv_color_make(0x00, 0xCC, 0x44), LV_PART_INDICATOR | LV_STATE_CHECKED);
+    if (wifi_creds_autoconnect_enabled()) lv_obj_add_state(auto_sw, LV_STATE_CHECKED);
+    lv_obj_add_event_cb(auto_sw, on_auto_switch, LV_EVENT_VALUE_CHANGED, NULL);
 
     status_label = lv_label_create(wifi_screen);
     lv_obj_set_style_text_font(status_label, &lv_font_montserrat_16, LV_PART_MAIN);
@@ -543,7 +582,7 @@ void wifi_screen_create()
 
     // Scrolling list — networks, then discovered devices
     list_box = lv_obj_create(wifi_screen);
-    lv_obj_set_size(list_box, 404, 352);
+    lv_obj_set_size(list_box, 404, 300);   // shortened to clear the bottom AUTO switch
     lv_obj_align(list_box, LV_ALIGN_TOP_MID, 0, 140);
     lv_obj_set_style_bg_color(list_box, lv_color_black(), LV_PART_MAIN);
     lv_obj_set_style_border_color(list_box, lv_color_make(0x00, 0x33, 0x00), LV_PART_MAIN);

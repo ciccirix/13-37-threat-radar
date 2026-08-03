@@ -1,0 +1,12 @@
+# 13:37 — custom 16 MB layout. The stock board scheme (app3M_fat9M_16MB) caps
+# the app at 3 MB and hands 9.9 MB to an internal FAT volume the firmware never
+# touches (everything logs to the external microSD via SD.h), plus a second
+# 3 MB OTA slot we never use (we flash over USB). Reclaim both: one 6 MB app
+# slot, a small FAT area kept only so the FS layer mounts. NVS stays at the same
+# offset/size, so duress + onboarding settings survive the reflash.
+# Name,     Type, SubType,  Offset,   Size,     Flags
+nvs,        data, nvs,      0x9000,   0x5000,
+otadata,    data, ota,      0xe000,   0x2000,
+app0,       app,  ota_0,    0x10000,  0x600000,
+ffat,       data, fat,      0x610000, 0x9E0000,
+coredump,   data, coredump, 0xFF0000, 0x10000,

@@ -3,6 +3,7 @@
 #include "flipper.h"
 #include "skimmer.h"
 #include "evil_twin.h"
+#include "evil_twin_screen.h"
 #include "flock.h"
 #include "tesla_cp_screen.h"
 #include "tpms_screen.h"
@@ -13,6 +14,8 @@
 #include "wifi_screen.h"
 #include "analyze_screen.h"
 #include "threat_radar_screen.h"
+#include "scan_screen.h"
+#include "meta_screen.h"
 #include "pet_screen.h"
 #include "stealth.h"
 #include "handshake.h"
@@ -31,7 +34,7 @@ static lv_obj_t *tools_screen;
 static lv_obj_t *t_airtag;    // referenced by on_airtag_clicked for colour swap
 static lv_obj_t *t_flipper;   // referenced by on_flipper_clicked for colour swap
 static lv_obj_t *t_skimmer;   // referenced by on_skimmer_clicked for colour swap
-static lv_obj_t *t_eviltwin;  // referenced by on_eviltwin_clicked for colour swap
+static lv_obj_t *t_eviltwin;  // opens the active Evil Twin panel (no colour swap)
 static lv_obj_t *t_flock;     // referenced by on_flock_clicked for colour swap
 static lv_obj_t *t_duress;    // referenced by on_duress_clicked for colour swap
 static lv_obj_t *t_handshake; // referenced by on_handshake_clicked for colour swap
@@ -114,24 +117,9 @@ static void on_skimmer_clicked(lv_event_t *e)
     }
 }
 
-static void set_eviltwin_tile_running(bool running)
-{
-    lv_obj_set_style_bg_color(t_eviltwin,
-        running ? lv_color_make(0x00, 0x55, 0x22)
-                : lv_color_make(0x11, 0x11, 0x11),
-        LV_PART_MAIN);
-}
-
-static void on_eviltwin_clicked(lv_event_t *e)
-{
-    if (evil_twin_is_running()) {
-        evil_twin_stop();
-        set_eviltwin_tile_running(false);
-    } else {
-        bool ok = evil_twin_start();
-        set_eviltwin_tile_running(ok);
-    }
-}
+// The evil-twin DETECTOR now runs inside the unified Scanner, so this tile is
+// repurposed as the ACTIVE Evil Twin panel (scan → clone → capture). No more
+// toggle/colour-swap here — it just opens the screen.
 
 static void set_flock_tile_running(bool running)
 {
@@ -1010,6 +998,88 @@ static void draw_tesla_cp_icon(lv_obj_t *tile)
     lv_obj_align(led, LV_ALIGN_BOTTOM_RIGHT, -10, -6);
 }
 
+// Unified Scanner — a mini results panel: a dark display holding three neon
+// signal rows (the flagged devices) with a bright green scan line sweeping
+// across. Reads as "live list of detections", not a cold-war radar scope.
+static void draw_scanner_icon(lv_obj_t *tile)
+{
+    lv_obj_t *panel = lv_obj_create(tile);
+    lv_obj_set_size(panel, 108, 96);
+    lv_obj_set_style_radius(panel, 14, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(panel, lv_color_make(0x08, 0x0A, 0x08), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(panel, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_border_color(panel, lv_color_make(0x2c, 0xa0, 0x60), LV_PART_MAIN);
+    lv_obj_set_style_border_width(panel, 2, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(panel, 0, LV_PART_MAIN);
+    lv_obj_clear_flag(panel, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_align(panel, LV_ALIGN_TOP_MID, 0, 30);
+
+    const lv_color_t rowc[3] = {
+        lv_color_make(0xFF, 0x33, 0x55),   // AirTag red
+        lv_color_make(0xFF, 0x8C, 0x1A),   // Flipper orange
+        lv_color_make(0xB2, 0x66, 0xFF),   // Flock violet
+    };
+    const int roww[3] = { 74, 58, 66 };
+    for (int i = 0; i < 3; i++) {
+        lv_obj_t *r = lv_obj_create(panel);
+        lv_obj_set_size(r, roww[i], 10);
+        lv_obj_set_style_radius(r, 5, LV_PART_MAIN);
+        lv_obj_set_style_bg_color(r, rowc[i], LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(r, LV_OPA_COVER, LV_PART_MAIN);
+        lv_obj_set_style_border_width(r, 0, LV_PART_MAIN);
+        lv_obj_set_style_pad_all(r, 0, LV_PART_MAIN);
+        lv_obj_clear_flag(r, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_align(r, LV_ALIGN_TOP_LEFT, 12, 16 + i * 22);
+    }
+
+    // Bright scan line sweeping down the panel.
+    lv_obj_t *scan = lv_obj_create(panel);
+    lv_obj_set_size(scan, 92, 3);
+    lv_obj_set_style_radius(scan, 2, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(scan, lv_color_make(0x66, 0xFF, 0xAA), LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(scan, LV_OPA_90, LV_PART_MAIN);
+    lv_obj_set_style_border_width(scan, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(scan, 0, LV_PART_MAIN);
+    lv_obj_clear_flag(scan, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_align(scan, LV_ALIGN_TOP_MID, 0, 48);
+}
+
+// Meta / smart-glasses detector — a pair of glasses: two rounded lenses joined
+// by a bridge, with short temples. Blue to read as "Meta".
+static void draw_meta_icon(lv_obj_t *tile)
+{
+    lv_color_t c = lv_color_make(0x33, 0x88, 0xFF);
+    for (int i = 0; i < 2; i++) {
+        lv_obj_t *lens = lv_obj_create(tile);
+        lv_obj_set_size(lens, 52, 44);
+        lv_obj_set_style_radius(lens, 14, LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(lens, LV_OPA_TRANSP, LV_PART_MAIN);
+        lv_obj_set_style_border_color(lens, c, LV_PART_MAIN);
+        lv_obj_set_style_border_width(lens, 5, LV_PART_MAIN);
+        lv_obj_set_style_pad_all(lens, 0, LV_PART_MAIN);
+        lv_obj_clear_flag(lens, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_align(lens, LV_ALIGN_TOP_MID, i == 0 ? -32 : 32, 62);
+    }
+    lv_obj_t *br = lv_obj_create(tile);              // bridge
+    lv_obj_set_size(br, 18, 5);
+    lv_obj_set_style_bg_color(br, c, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(br, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_border_width(br, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(br, 0, LV_PART_MAIN);
+    lv_obj_clear_flag(br, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_align(br, LV_ALIGN_TOP_MID, 0, 80);
+    for (int i = 0; i < 2; i++) {                    // temples
+        lv_obj_t *t = lv_obj_create(tile);
+        lv_obj_set_size(t, 18, 5);
+        lv_obj_set_style_bg_color(t, c, LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(t, LV_OPA_COVER, LV_PART_MAIN);
+        lv_obj_set_style_border_width(t, 0, LV_PART_MAIN);
+        lv_obj_set_style_pad_all(t, 0, LV_PART_MAIN);
+        lv_obj_clear_flag(t, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_align(t, LV_ALIGN_TOP_MID, i == 0 ? -66 : 66, 66);
+    }
+}
+
 // Threat Radar — concentric sweep rings with a single red blip, evoking a
 // radar scope. Rings are transparent circles with a green border; the blip is
 // a contact riding a ring, the spoke a faint sweep line.
@@ -1356,6 +1426,7 @@ void tools_screen_create()
     // The timepiece tiles (Alarm / Stopwatch / Timer / Calendar) used to live
     // at the bottom of this grid; they moved to the TIME screen (swipe up
     // from the clock face).
+    lv_obj_t *t_scanner = make_tile(grid, "Scanner");
     lv_obj_t *t_wifi    = make_tile(grid, "WiFi");
     lv_obj_t *t_analyze = make_tile(grid, "Analyze");
     lv_obj_t *t_mouse   = make_tile(grid, "Mouse");
@@ -1370,6 +1441,7 @@ void tools_screen_create()
     t_eviltwin          = make_tile(grid, "Evil Twin");
     t_flock             = make_tile(grid, "Flock");
     lv_obj_t *t_radar   = make_tile(grid, "Radar");
+    lv_obj_t *t_meta    = make_tile(grid, "Meta");
     lv_obj_t *t_pet     = make_tile(grid, "Pet");
     t_duress            = make_tile(grid, "Duress");
     t_handshake         = make_tile(grid, "Pwn");
@@ -1379,6 +1451,7 @@ void tools_screen_create()
     lv_obj_t *t_espnow  = make_tile(grid, "ESP-NOW");
     lv_obj_t *t_garage  = make_tile(grid, "Cancello");
 
+    draw_scanner_icon(t_scanner);
     draw_wifi_icon(t_wifi);
     draw_analyzer_icon(t_analyze);
     draw_mouse_icon(t_mouse);
@@ -1393,6 +1466,7 @@ void tools_screen_create()
     draw_eviltwin_icon(t_eviltwin);
     draw_flock_icon(t_flock);
     draw_radar_icon(t_radar);
+    draw_meta_icon(t_meta);
     draw_pet_icon(t_pet);
     draw_duress_icon(t_duress);
     draw_handshake_icon(t_handshake);
@@ -1421,8 +1495,7 @@ void tools_screen_create()
     set_skimmer_tile_running(skimmer_is_running());
 
     // Evil Twin tile toggles the rogue-AP detector (WiFi beacon scan).
-    lv_obj_add_event_cb(t_eviltwin, on_eviltwin_clicked, LV_EVENT_CLICKED, NULL);
-    set_eviltwin_tile_running(evil_twin_is_running());
+    lv_obj_add_event_cb(t_eviltwin, [](lv_event_t *) { evil_twin_screen_show(); }, LV_EVENT_CLICKED, NULL);
 
     // Flock tile toggles the surveillance-vendor detector (WiFi + BLE scan).
     lv_obj_add_event_cb(t_flock, on_flock_clicked, LV_EVENT_CLICKED, NULL);
@@ -1430,6 +1503,7 @@ void tools_screen_create()
 
     // Radar tile opens the Threat Radar spatio-temporal correlation screen.
     lv_obj_add_event_cb(t_radar, [](lv_event_t *) { threat_radar_screen_show(); }, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(t_meta, [](lv_event_t *) { meta_screen_show(); }, LV_EVENT_CLICKED, NULL);
 
     // Pet tile opens the pwnpet mascot (meets nearby Pwnagotchis, reacts to events).
     lv_obj_add_event_cb(t_pet, [](lv_event_t *) { pet_screen_show(); }, LV_EVENT_CLICKED, NULL);
@@ -1458,6 +1532,7 @@ void tools_screen_create()
     lv_obj_add_event_cb(t_aprs, [](lv_event_t *) { aprs_screen_show(); }, LV_EVENT_CLICKED, NULL);
 
     // WiFi tile opens the site-survey + ping-sweep screen.
+    lv_obj_add_event_cb(t_scanner, [](lv_event_t *) { scan_screen_show(); }, LV_EVENT_CLICKED, NULL);
     lv_obj_add_event_cb(t_wifi, [](lv_event_t *) { wifi_screen_show(); }, LV_EVENT_CLICKED, NULL);
 
     // Analyze tile opens the WiFi channel utilisation visualisation.

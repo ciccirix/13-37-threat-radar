@@ -35,9 +35,10 @@ bool configuration_screen_get_rebroadcast_enabled();
 bool configuration_screen_get_vibrate_dm();
 bool configuration_screen_get_vibrate_broadcast();
 
-// --- Radio config for Meshtastic LongFast (US 915 MHz band) ---
-// EU_868 users: change MESH_FREQ_MHZ to 869.525
-static const float   MESH_FREQ_MHZ = 906.875f;
+// --- Radio config for Meshtastic LongFast (EU_868 band) ---
+// EU_868 LongFast primary channel = 869.525 MHz (869.4-869.65 ISM sub-band).
+// US_915 users: change MESH_FREQ_MHZ back to 906.875.
+static const float   MESH_FREQ_MHZ = 869.525f;
 static const float   MESH_BW_KHZ   = 250.0f;
 static const uint8_t MESH_SF       = 11;
 static const uint8_t MESH_CR       = 5;    // 4/5
@@ -1606,6 +1607,9 @@ void meshtastic_set_active(bool active)
         radio.setCodingRate(MESH_CR);
         // Meshtastic uses 0x2B (semi-public), not the RadioLib default 0x12
         radio.setSyncWord(0x2B);
+        // Meshtastic uses a 16-symbol preamble (RadioLib LoRa default is 8) —
+        // match it so stock nodes (e.g. a Heltec) reliably detect our packets.
+        radio.setPreambleLength(16);
         s_pkt_flag         = false;
         s_cad_last_ms      = millis();
         s_nodeinfo_pending = true;   // send NodeInfo on next bg tick

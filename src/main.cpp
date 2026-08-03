@@ -7,6 +7,10 @@
 #include <time.h>
 #include <math.h>
 #include "boot_skull_img.h"   // fisherman-skull boot splash (ported from Marauder C5)
+#include "defcon_img.h"       // DEF CON 34 logo (recolored to fluo) for the clock face
+#include "scan_radio.h"       // unified Scanner: time-sliced WiFi/BLE radio scheduler
+#include "evil_portal.h"      // Evil Twin: captive-portal pump (no-op unless up)
+#include "wifi_creds.h"       // remembered WiFi creds (+ /wifi.txt seed) → no keyboard
 #include "gps_screen.h"
 #include "lora_screen.h"
 #include "meshtastic.h"
@@ -90,6 +94,9 @@ static lv_obj_t *analog_container;
 static lv_obj_t *hand_hour;
 static lv_obj_t *hand_min;
 static lv_obj_t *hand_sec;
+static lv_obj_t *defcon_logo      = nullptr;   // DEF CON 34 logo on the digital face
+static lv_obj_t *defcon_vegas     = nullptr;   // "LAS VEGAS" line
+static lv_obj_t *defcon_countdown = nullptr;   // DEF CON 34 countdown line
 static bool      analog_face = false;
 static uint32_t last_update_ms   = 0;
 static int      clock_utc_offset = 0; // hours, set after GPS fix
@@ -295,6 +302,28 @@ static void build_analog_clock(lv_obj_t *screen)
     lv_obj_set_style_pad_all(dot, 0, LV_PART_MAIN);
     lv_obj_clear_flag(dot, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_clear_flag(dot, LV_OBJ_FLAG_CLICKABLE);
+}
+
+// DEF CON 34 opens Thu 6 Aug 2026 in Las Vegas (~08:00 PDT ≈ 17:00 Italy). Target
+// that local-time instant and count down from the RTC; shows "IN CORSO" during
+// the con (6-9 Aug), then just the name afterwards.
+static void update_defcon_countdown(const struct tm *now_in)
+{
+    if (!defcon_countdown) return;
+    struct tm now = *now_in;                 // local time (already offset-adjusted)
+    struct tm tgt = {};
+    tgt.tm_year = 2026 - 1900; tgt.tm_mon = 8 - 1; tgt.tm_mday = 6;
+    tgt.tm_hour = 17; tgt.tm_isdst = -1;
+    long diff = (long)(mktime(&tgt) - mktime(&now));
+    if (diff > 0) {
+        long d = diff / 86400, h = (diff % 86400) / 3600, m = (diff % 3600) / 60;
+        lv_label_set_text_fmt(defcon_countdown,
+            "DEF CON 34  " LV_SYMBOL_RIGHT "  %ldg %ldh %ldm", d, h, m);
+    } else if (diff > -4L * 86400) {         // during the con (6-9 Aug)
+        lv_label_set_text(defcon_countdown, LV_SYMBOL_WARNING "  DEF CON 34  " LV_SYMBOL_WARNING);
+    } else {
+        lv_label_set_text(defcon_countdown, "DEF CON 34");
+    }
 }
 
 static void update_analog_clock(const struct tm *t)
@@ -649,6 +678,10 @@ void clock_screen_set_analog_face(bool analog)
     if (analog) {
         lv_obj_add_flag(time_label, LV_OBJ_FLAG_HIDDEN);
         lv_obj_clear_flag(analog_container, LV_OBJ_FLAG_HIDDEN);
+        // DEF CON logo/LAS VEGAS/countdown belong to the digital face — hide in analog.
+        if (defcon_logo)      lv_obj_add_flag(defcon_logo,      LV_OBJ_FLAG_HIDDEN);
+        if (defcon_vegas)     lv_obj_add_flag(defcon_vegas,     LV_OBJ_FLAG_HIDDEN);
+        if (defcon_countdown) lv_obj_add_flag(defcon_countdown, LV_OBJ_FLAG_HIDDEN);
         // Immediately drive hands to the current time
         struct tm t;
         instance.rtc.getDateTime(&t);
@@ -657,6 +690,9 @@ void clock_screen_set_analog_face(bool analog)
     } else {
         lv_obj_clear_flag(time_label, LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_flag(analog_container, LV_OBJ_FLAG_HIDDEN);
+        if (defcon_logo)      lv_obj_clear_flag(defcon_logo,      LV_OBJ_FLAG_HIDDEN);
+        if (defcon_vegas)     lv_obj_clear_flag(defcon_vegas,     LV_OBJ_FLAG_HIDDEN);
+        if (defcon_countdown) lv_obj_clear_flag(defcon_countdown, LV_OBJ_FLAG_HIDDEN);
     }
 }
 
@@ -1071,7 +1107,9 @@ static void resize_clock_text()
     // Hash the inputs that affect the natural width. Per-second seconds
     // tick doesn't change this hash, so we early-out without remeasuring.
     int screen_w = lv_obj_get_width(clock_screen);
-    int usable_w = screen_w - 2 * CLOCK_TEXT_PAD_X;
+    // DEF CON face: keep the time smaller than full-width so the logo above +
+    // LAS VEGAS/countdown below all breathe (was full width → oversized).
+    int usable_w = (screen_w - 2 * CLOCK_TEXT_PAD_X) * 66 / 100;
     if (usable_w <= 0) return;
 
     uint32_t key = ((uint32_t)usable_w << 3)
@@ -1175,6 +1213,8 @@ static void update_clock()
         lv_obj_invalidate(time_label);
         resize_clock_text();
     }
+
+    update_defcon_countdown(&t);   // keep the DEF CON 34 countdown live
 
     char date_buf[32];
     if (clock_show_day && clock_show_date)
@@ -1356,7 +1396,7 @@ void setup()
     lv_spangroup_set_align(time_label, LV_TEXT_ALIGN_CENTER);
     lv_spangroup_set_mode(time_label, LV_SPAN_MODE_FIXED);
     lv_obj_set_width(time_label, lv_pct(100));
-    lv_obj_align(time_label, LV_ALIGN_CENTER, 0, -40);
+    lv_obj_align(time_label, LV_ALIGN_CENTER, 0, 50);   // lowered to make room for the DEF CON logo on top
 
     s_span_hours = lv_spangroup_new_span(time_label);
     lv_span_set_text(s_span_hours, "00");
@@ -1373,6 +1413,30 @@ void setup()
     lv_obj_set_style_text_align(date_label, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
     lv_label_set_text(date_label, "");
     lv_obj_align(date_label, LV_ALIGN_CENTER, 0, 60);
+    lv_obj_add_flag(date_label, LV_OBJ_FLAG_HIDDEN);   // DEF CON face shows LAS VEGAS + countdown instead
+
+    // ─── DEF CON 34 clock face: logo on top, LAS VEGAS + countdown below ───────
+    // Logo (recolored fluo) sits under the status icons, above the big time.
+    defcon_logo = lv_image_create(clock_screen);
+    lv_image_set_src(defcon_logo, &defcon_img);
+    lv_obj_align(defcon_logo, LV_ALIGN_TOP_MID, 0, 48);   // below the status-icon row
+    lv_obj_clear_flag(defcon_logo, LV_OBJ_FLAG_CLICKABLE);
+
+    // "LAS VEGAS" in celeste, just under the time.
+    defcon_vegas = lv_label_create(clock_screen);
+    lv_obj_set_style_text_font(defcon_vegas, &lv_font_montserrat_28, LV_PART_MAIN);
+    lv_obj_set_style_text_color(defcon_vegas, lv_color_make(0x00, 0xE8, 0xFF), LV_PART_MAIN);
+    lv_obj_set_style_text_letter_space(defcon_vegas, 4, LV_PART_MAIN);
+    lv_label_set_text(defcon_vegas, "LAS VEGAS");
+    lv_obj_align(defcon_vegas, LV_ALIGN_CENTER, 0, 112);
+
+    // Countdown to DEF CON 34 opening, in fucsia, at the bottom.
+    defcon_countdown = lv_label_create(clock_screen);
+    lv_obj_set_style_text_font(defcon_countdown, &lv_font_montserrat_20, LV_PART_MAIN);
+    lv_obj_set_style_text_color(defcon_countdown, lv_color_make(0xFF, 0x12, 0xB0), LV_PART_MAIN);
+    lv_obj_set_style_text_align(defcon_countdown, LV_TEXT_ALIGN_CENTER, LV_PART_MAIN);
+    lv_label_set_text(defcon_countdown, "DEF CON 34");
+    lv_obj_align(defcon_countdown, LV_ALIGN_CENTER, 0, 148);
 
     build_battery_widget(clock_screen);
 
@@ -1713,12 +1777,18 @@ void setup()
     // the WiFi auto-sync hook + background worker.
     timezone_load_on_boot();
     timezone_init();
+
+    // Auto-connect to a remembered WiFi (or one seeded from /wifi.txt on the SD),
+    // so NTP + geolocation come up without ever touching the tiny keyboard.
+    wifi_creds_autoconnect();
 }
 
 void loop()
 {
     instance.loop(); // required for power button and PMU event dispatch
     motion_wake_poll();   // accel-driven wake; no-op when toggle is off
+    scan_radio_tick();    // unified Scanner: switch WiFi/BLE slices; no-op when idle
+    evil_portal_tick();   // Evil Twin captive portal: serve DNS+HTTP; no-op when idle
     timezone_bg_tick();   // apply background WiFi NTP/geolocation results
     onboarding_bg_tick(); // send the one-time install ping once WiFi is available
     // Cheap on every iteration (an indev_state read + a millis() compare);
