@@ -11,6 +11,7 @@ void clock_screen_get_local_time(struct tm *out);
 #include "ping/ping_sock.h"
 #include "lwip/ip_addr.h"
 #include "lwip/etharp.h"
+#include "lwip/netif.h"
 
 // ---- state -----------------------------------------------------------------
 
@@ -82,6 +83,12 @@ static void sweep_task(void *)
         addr.type = IPADDR_TYPE_V4;
         addr.u_addr.ip4.addr = (uint32_t)s_net_a | ((uint32_t)s_net_b << 8)
                              | ((uint32_t)s_net_c << 16) | ((uint32_t)d << 24);
+
+        // Fire an explicit ARP who-has as well. Catches hosts that drop ICMP and
+        // are slow to resolve via the ping's implicit ARP — e.g. WiFi power-save
+        // IP cameras. The ping's wait below gives the reply time to land in the
+        // cache before lookup_mac() reads it.
+        if (netif_default) etharp_request(netif_default, &addr.u_addr.ip4);
 
         esp_ping_config_t cfg;
         memset(&cfg, 0, sizeof(cfg));

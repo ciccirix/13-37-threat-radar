@@ -16,6 +16,7 @@
 #include "threat_radar_screen.h"
 #include "scan_screen.h"
 #include "meta_screen.h"
+#include "task_manager.h"
 #include "pet_screen.h"
 #include "stealth.h"
 #include "handshake.h"
@@ -1044,6 +1045,44 @@ static void draw_scanner_icon(lv_obj_t *tile)
     lv_obj_align(scan, LV_ALIGN_TOP_MID, 0, 48);
 }
 
+// Task manager — a battery outline with a kill "×" over it, amber. Reads as
+// "stop things to save power".
+static void draw_taskmgr_icon(lv_obj_t *tile)
+{
+    lv_color_t c = lv_color_make(0xFF, 0x9A, 0x33);
+    lv_obj_t *body = lv_obj_create(tile);          // battery body
+    lv_obj_set_size(body, 104, 60);
+    lv_obj_set_style_radius(body, 12, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(body, LV_OPA_TRANSP, LV_PART_MAIN);
+    lv_obj_set_style_border_color(body, c, LV_PART_MAIN);
+    lv_obj_set_style_border_width(body, 5, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(body, 0, LV_PART_MAIN);
+    lv_obj_clear_flag(body, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_align(body, LV_ALIGN_TOP_MID, -6, 56);
+    lv_obj_t *nub = lv_obj_create(tile);           // + terminal
+    lv_obj_set_size(nub, 10, 26);
+    lv_obj_set_style_radius(nub, 4, LV_PART_MAIN);
+    lv_obj_set_style_bg_color(nub, c, LV_PART_MAIN);
+    lv_obj_set_style_bg_opa(nub, LV_OPA_COVER, LV_PART_MAIN);
+    lv_obj_set_style_border_width(nub, 0, LV_PART_MAIN);
+    lv_obj_set_style_pad_all(nub, 0, LV_PART_MAIN);
+    lv_obj_clear_flag(nub, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_align(nub, LV_ALIGN_TOP_MID, 52, 73);
+    // kill "×" inside
+    for (int i = 0; i < 2; i++) {
+        lv_obj_t *bar = lv_obj_create(tile);
+        lv_obj_set_size(bar, 44, 6);
+        lv_obj_set_style_radius(bar, 3, LV_PART_MAIN);
+        lv_obj_set_style_bg_color(bar, lv_color_make(0xFF, 0x44, 0x44), LV_PART_MAIN);
+        lv_obj_set_style_bg_opa(bar, LV_OPA_COVER, LV_PART_MAIN);
+        lv_obj_set_style_border_width(bar, 0, LV_PART_MAIN);
+        lv_obj_set_style_pad_all(bar, 0, LV_PART_MAIN);
+        lv_obj_set_style_transform_rotation(bar, i == 0 ? 450 : -450, LV_PART_MAIN);
+        lv_obj_clear_flag(bar, LV_OBJ_FLAG_SCROLLABLE);
+        lv_obj_align(bar, LV_ALIGN_TOP_MID, -6, 83);
+    }
+}
+
 // Meta / smart-glasses detector — a pair of glasses: two rounded lenses joined
 // by a bridge, with short temples. Blue to read as "Meta".
 static void draw_meta_icon(lv_obj_t *tile)
@@ -1442,6 +1481,7 @@ void tools_screen_create()
     t_flock             = make_tile(grid, "Flock");
     lv_obj_t *t_radar   = make_tile(grid, "Radar");
     lv_obj_t *t_meta    = make_tile(grid, "Meta");
+    lv_obj_t *t_task    = make_tile(grid, "Task Mgr");
     lv_obj_t *t_pet     = make_tile(grid, "Pet");
     t_duress            = make_tile(grid, "Duress");
     t_handshake         = make_tile(grid, "Pwn");
@@ -1467,6 +1507,7 @@ void tools_screen_create()
     draw_flock_icon(t_flock);
     draw_radar_icon(t_radar);
     draw_meta_icon(t_meta);
+    draw_taskmgr_icon(t_task);
     draw_pet_icon(t_pet);
     draw_duress_icon(t_duress);
     draw_handshake_icon(t_handshake);
@@ -1504,6 +1545,7 @@ void tools_screen_create()
     // Radar tile opens the Threat Radar spatio-temporal correlation screen.
     lv_obj_add_event_cb(t_radar, [](lv_event_t *) { threat_radar_screen_show(); }, LV_EVENT_CLICKED, NULL);
     lv_obj_add_event_cb(t_meta, [](lv_event_t *) { meta_screen_show(); }, LV_EVENT_CLICKED, NULL);
+    lv_obj_add_event_cb(t_task, [](lv_event_t *) { task_manager_show(); }, LV_EVENT_CLICKED, NULL);
 
     // Pet tile opens the pwnpet mascot (meets nearby Pwnagotchis, reacts to events).
     lv_obj_add_event_cb(t_pet, [](lv_event_t *) { pet_screen_show(); }, LV_EVENT_CLICKED, NULL);

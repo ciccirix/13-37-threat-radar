@@ -8,6 +8,8 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
+#include "lwip/etharp.h"
+#include "lwip/ip_addr.h"
 #include <string.h>
 #include <strings.h>
 #include <ctype.h>
@@ -302,11 +304,26 @@ static void enqueue(uint32_t ip, const uint8_t *mac, bool has_mac,
     xQueueSend(s_q, &f, 0);
 }
 
+// Read the MAC for an IP from the lwIP ARP cache. The host was just TCP-probed,
+// which forces an ARP even for a ping-silent camera, so the entry is fresh.
+static bool arp_lookup(uint32_t ip_hostorder, uint8_t out[6])
+{
+    uint32_t want = ((ip_hostorder >> 24) & 0xFF)
+                  | (((ip_hostorder >> 16) & 0xFF) << 8)
+                  | (((ip_hostorder >> 8) & 0xFF) << 16)
+                  | ((ip_hostorder & 0xFF) << 24);   // network byte order
+    for (int i = 0; i < 32; i++) {
+        ip4_addr_t *ip = nullptr; struct netif *nif = nullptr; struct eth_addr *eth = nullptr;
+        if (!etharp_get_entry(i, &ip, &nif, &eth)) continue;
+        if (ip && eth && ip->addr == want) { memcpy(out, eth->addr, 6); return true; }
+    }
+    return false;
+}
+
 static void probe_host(const PingDevice *d)
 {
     uint32_t ip = d->ip;
     IPAddress addr((ip >> 24) & 0xFF, (ip >> 16) & 0xFF, (ip >> 8) & 0xFF, ip & 0xFF);
-    const char *vendor = d->has_mac ? flock_classify(d->mac, nullptr) : nullptr;
 
     uint8_t  level = 0;
     uint16_t port  = 0;
@@ -356,13 +373,21 @@ static void probe_host(const PingDevice *d)
         }
     }
 
+    // Resolve the vendor from the MAC — prefer the sweep's, else the fresh ARP
+    // entry the probes above just created (this is what catches a ping-silent
+    // camera whose MAC the sweep didn't capture, e.g. 192.168.1.11).
+    uint8_t mac[6]; bool have_mac = d->has_mac;
+    if (have_mac) memcpy(mac, d->mac, 6);
+    else          have_mac = arp_lookup(ip, mac);
+    const char *vendor = have_mac ? flock_classify(mac, nullptr) : nullptr;
+
     if (level == 0 && vendor) {
         level = CL_VENDOR;
         snprintf(note, sizeof(note), "OUI only");
     }
 
     if (level > 0)
-        enqueue(ip, d->mac, d->has_mac, vendor, level, port, note);
+        enqueue(ip, mac, have_mac, vendor, level, port, note);
 }
 
 static void audit_task(void *)
