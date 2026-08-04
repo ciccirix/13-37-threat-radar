@@ -74,60 +74,52 @@ static void lookup_mac(uint8_t a, uint8_t b, uint8_t c, uint8_t d, PingDevice *d
 
 static void sweep_task(void *)
 {
-    for (int d = 1; d <= 254 && !s_abort; d++) {
-        s_cur_alive = false;
-        s_cur_rtt   = 0;
+    // Batched, PATIENT ARP scan. ICMP is useless here: WiFi power-save IP
+    // cameras drop ping and take up to ~1.7 s just to wake and answer even an
+    // ARP who-has (measured: 1720 ms first reply). So we ARP a small batch,
+    // wait long enough for a sleepy device to answer, then read back only the
+    // RESOLVED entries (etharp_find_addr skips pending ones — no bogus MACs).
+    // Small batches keep the tiny lwIP ARP table from overflowing with pending
+    // requests. ~32 batches * 1.8 s ≈ 58 s for the whole /24.
+    struct netif *nif = netif_default;
+    const int BATCH = 8;
+    for (int base = 1; base <= 254 && !s_abort; base += BATCH) {
+        int last = base + BATCH - 1; if (last > 254) last = 254;
 
-        ip_addr_t addr;
-        memset(&addr, 0, sizeof(addr));
-        addr.type = IPADDR_TYPE_V4;
-        addr.u_addr.ip4.addr = (uint32_t)s_net_a | ((uint32_t)s_net_b << 8)
-                             | ((uint32_t)s_net_c << 16) | ((uint32_t)d << 24);
-
-        // Fire an explicit ARP who-has as well. Catches hosts that drop ICMP and
-        // are slow to resolve via the ping's implicit ARP — e.g. WiFi power-save
-        // IP cameras. The ping's wait below gives the reply time to land in the
-        // cache before lookup_mac() reads it.
-        if (netif_default) etharp_request(netif_default, &addr.u_addr.ip4);
-
-        esp_ping_config_t cfg;
-        memset(&cfg, 0, sizeof(cfg));
-        cfg.count           = 1;
-        cfg.interval_ms     = 10;
-        cfg.timeout_ms      = 150;     // LAN round-trips are well under this
-        cfg.data_size       = 32;
-        cfg.ttl             = 64;
-        cfg.target_addr     = addr;
-        cfg.task_stack_size = 3072;
-        cfg.task_prio       = 2;
-        cfg.interface       = 0;
-
-        esp_ping_handle_t hdl = nullptr;
-        if (esp_ping_new_session(&cfg, &s_cbs, &hdl) == ESP_OK && hdl) {
-            xSemaphoreTake(s_sem, 0);          // drop any stale signal
-            esp_ping_start(hdl);
-            xSemaphoreTake(s_sem, pdMS_TO_TICKS(2000));
-            esp_ping_delete_session(hdl);
+        // THREE rounds of ARP who-has spread over ~2.4 s. A deep power-save
+        // camera only wakes every ~1.7 s and drops the first probe or two
+        // (measured on a PC: 2 failed pings, then 1720 ms), so a single request
+        // misses it — repeating gives it several chances to wake and answer.
+        for (int rep = 0; rep < 3 && !s_abort; rep++) {
+            for (int d = base; d <= last && nif; d++) {
+                ip4_addr_t t;
+                t.addr = (uint32_t)s_net_a | ((uint32_t)s_net_b << 8)
+                       | ((uint32_t)s_net_c << 16) | ((uint32_t)d << 24);
+                etharp_request(nif, &t);
+            }
+            for (int w = 0; w < 16 && !s_abort; w++) vTaskDelay(pdMS_TO_TICKS(50));  // 0.8 s
         }
 
-        // Sending the ping forces an ARP resolution first: to emit the ICMP
-        // echo, lwIP must learn the target's MAC, and EVERY host on the segment
-        // must answer ARP (it's mandatory L2) even if it silently drops ICMP —
-        // as IP cameras and lots of IoT gear do. So a host counts as alive if it
-        // answered ICMP OR left a fresh entry in the ARP cache. This is what
-        // makes silent cameras (e.g. 192.168.1.11) show up instead of the 2-3
-        // devices that bother to reply to ping.
-        PingDevice dev;
-        memset(&dev, 0, sizeof(dev));
-        dev.ip = ((uint32_t)s_net_a << 24) | ((uint32_t)s_net_b << 16)
-               | ((uint32_t)s_net_c << 8)  | (uint32_t)d;
-        dev.rtt_ms = s_cur_rtt;   // 0 for ARP-only hosts (no ICMP round-trip)
-        lookup_mac(s_net_a, s_net_b, s_net_c, (uint8_t)d, &dev);
-        if ((s_cur_alive || dev.has_mac) && s_device_count < PINGSWEEP_MAX_DEVICES) {
-            s_devices[s_device_count] = dev;
-            s_device_count = s_device_count + 1;   // publish last (UI reads count)
+        for (int d = base; d <= last && nif; d++) {
+            ip4_addr_t t;
+            t.addr = (uint32_t)s_net_a | ((uint32_t)s_net_b << 8)
+                   | ((uint32_t)s_net_c << 16) | ((uint32_t)d << 24);
+            struct eth_addr  *eth = nullptr;
+            const ip4_addr_t *ipr = nullptr;
+            if (etharp_find_addr(nif, &t, &eth, &ipr) < 0 || !eth) continue;
+            uint32_t hostip = ((uint32_t)s_net_a << 24) | ((uint32_t)s_net_b << 16)
+                            | ((uint32_t)s_net_c << 8)  | (uint32_t)d;
+            bool have = false;
+            for (int j = 0; j < s_device_count; j++)
+                if (s_devices[j].ip == hostip) { have = true; break; }
+            if (have || s_device_count >= PINGSWEEP_MAX_DEVICES) continue;
+            PingDevice dev; memset(&dev, 0, sizeof(dev));
+            dev.ip = hostip;
+            memcpy(dev.mac, eth->addr, 6);
+            dev.has_mac = true;
+            s_devices[s_device_count++] = dev;
         }
-        s_scanned = s_scanned + 1;
+        s_scanned = last;
     }
 
     s_done    = true;

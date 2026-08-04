@@ -397,7 +397,12 @@ static void audit_task(void *)
 
     s_phase = CA_SWEEP;
     pingsweep_start();
-    for (int i = 0; i < 800 && s_run && pingsweep_is_running(); i++) vTaskDelay(pdMS_TO_TICKS(50));
+    // Wait for the sweep to FULLY finish (incl. its final ARP-harvest pass that
+    // adds slow power-save cameras). The old 40 s cap cut this off early — the
+    // camera is often only added in the last second, so we'd probe a list that
+    // didn't include it yet. 90 s is plenty; the loop still exits the instant
+    // the sweep stops running.
+    for (int i = 0; i < 2600 && s_run && pingsweep_is_running(); i++) vTaskDelay(pdMS_TO_TICKS(50));
 
     if (!s_run) { s_phase = CA_DONE; s_task = nullptr; vTaskDelete(nullptr); return; }
 
